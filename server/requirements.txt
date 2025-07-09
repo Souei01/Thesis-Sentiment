@@ -1,0 +1,7 @@
+django>=4.0
+djangorestframework>=3.14
+
+pyjwt[crypto]==2.9.0
+cryptography==44.0.0
+cffi==1.17.1
+pycparser==2.22
