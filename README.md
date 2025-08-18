@@ -1,39 +1,68 @@
 # Thesis-Sentiment
 
-Setup Instructions
 
-Install Node.js and Python
-Download and install the latest versions of Node.js and Python from their official websites.
+## Thesis-Sentiment
 
-Set up the client (Next.js app):
-    Open a terminal and navigate to the client folder:
-        #cd client
-    Install dependencies:
-        #npm install
-    Start the development server:
-        #npm run dev
-Open the link shown in the terminal (usually http://localhost:3000) in your browser.
+This project consists of a Next.js client and a Python (Django) backend for sentiment analysis.
 
-Set up the server (Python backend):
-    activitate venv
-        #.\venv\Scripts\activate
-    Navigate to the server folder:
-        #cd server
-    Install Python dependencies
-        #pip install -r requirements.txt
+---
 
-# How to run the Python server
+### Prerequisites
 
-## Activate your virtual environment (if not already active)
-```
-cd server
-python -m venv venv
-venv\Scripts\activate
-```
+- [Node.js](https://nodejs.org/) (latest LTS recommended)
+- [Python](https://www.python.org/) (3.8+ recommended)
 
-## Run the server (example for Django)
-```
-python manage.py runserver
-```
+---
 
-The server will start and show a local link (usually http://127.0.0.1:8000). Open this link in your browser to access the backend.
+## Setup Instructions
+
+### 1. Client (Next.js)
+
+1. Open a terminal and navigate to the `client` folder:
+    ```powershell
+    cd client
+    ```
+2. Install dependencies:
+    ```powershell
+    npm install
+    ```
+3. Start the development server:
+    ```powershell
+    npm run dev
+    ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+### 2. Server (Python/Django)
+
+1. (Recommended) Create and activate a virtual environment:
+    ```powershell
+    python -m venv venv
+    .\venv\Scripts\activate
+    ```
+2. Navigate to the `server` folder:
+    ```powershell
+    cd server
+    ```
+3. Install Python dependencies:
+    ```powershell
+    pip install -r requirements.txt
+    ```
+4. Run the Django server:
+    ```powershell
+    python manage.py runserver
+    ```
+5. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser to access the backend.
+
+---
+
+## Notes
+
+- Make sure your virtual environment is activated before installing Python packages or running the server.
+- If you encounter issues with PowerShell script execution, set the execution policy:
+    ```powershell
+    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+    ```
+
+---
