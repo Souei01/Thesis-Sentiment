@@ -11,6 +11,7 @@ import { ProgressBar } from './ProgressBar';
 import { RatingInput } from './RatingInput';
 import { YesNoInput } from './YesNoInput';
 import { FeedbackFormData, FORM_STEPS } from '@/types/feedback';
+import { saveFormProgress, getFormProgress, clearFormProgress } from '@/lib/formProgress';
 
 interface MultistepFeedbackFormProps {
   courseId: string;
@@ -91,27 +92,27 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FeedbackFormData>(() => {
-    // Load saved progress from localStorage
-    const saved = localStorage.getItem(`feedback-${courseId}`);
-    if (saved) {
+    // Load saved progress from formProgress utility
+    const saved = getFormProgress(courseId);
+    if (saved && saved.formData) {
       try {
-        const parsed = JSON.parse(saved);
-        setCurrentStep(parsed.currentStep || 1);
-        return parsed;
+        setCurrentStep(saved.currentStep || 1);
+        return saved.formData as FeedbackFormData;
       } catch (e) {
-        console.error('Error parsing saved form data:', e);
+        console.error('Error loading saved form data:', e);
       }
     }
     return getInitialFormData(courseId);
   });
 
-  // Save progress to localStorage whenever form data changes
+  // Save progress using formProgress utility whenever form data changes
   useEffect(() => {
-    const dataToSave = { ...formData, currentStep };
-    localStorage.setItem(`feedback-${courseId}`, JSON.stringify(dataToSave));
-    
-    // Dispatch custom event to update course card progress
-    window.dispatchEvent(new Event('feedbackUpdated'));
+    saveFormProgress(courseId, {
+      currentStep,
+      totalSteps: FORM_STEPS.length,
+      formData,
+      lastUpdated: new Date().toISOString()
+    });
   }, [formData, currentStep, courseId]);
 
   const updateFormData = (section: string, field: string, value: any) => {
@@ -170,7 +171,8 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
     if (validateCurrentStep()) {
       const completedData = { ...formData, completedAt: new Date() };
       onSubmit(completedData);
-      localStorage.removeItem(`feedback-${courseId}`);
+      // Clear form progress from storage
+      clearFormProgress(courseId);
     } else {
       alert('Please answer all required questions before submitting.');
     }

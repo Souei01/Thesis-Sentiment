@@ -4,18 +4,22 @@ export interface Course {
   name: string;
   description?: string;
   instructor?: string;
+  instructorId?: string;
+  section?: string;
   semester: string;
   hasSubmittedFeedback: boolean;
+  progress?: number;
+  dueDate?: string;
+  tag?: 'Student' | 'Recommended' | 'Popular';
+  color?: 'pink' | 'blue' | 'yellow' | 'green';
+  // Deprecated fields - kept for backward compatibility
   modules?: {
     completed: number;
     total: number;
   };
   tasks?: number;
   projects?: number;
-  progress?: number;
   startDate?: string;
-  tag?: 'Student' | 'Recommended' | 'Popular';
-  color?: 'pink' | 'blue' | 'yellow' | 'green';
   avatar?: string;
 }
 

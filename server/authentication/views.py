@@ -38,9 +38,16 @@ class LoginView(APIView):
                     }
                 }, status=status.HTTP_200_OK)
             
+            # Handle validation errors
+            error_message = 'Login failed'
+            
+            # Check if there's a non_field_errors (general validation error)
+            if 'non_field_errors' in serializer.errors:
+                error_message = serializer.errors['non_field_errors'][0]
+            
             return Response({
                 'success': False,
-                'message': 'Login failed',
+                'message': error_message,
                 'errors': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
             
@@ -49,7 +56,7 @@ class LoginView(APIView):
             return Response({
                 'success': False,
                 'message': 'An error occurred during login',
-                'errors': str(e)
+                'errors': {'general': str(e)}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):

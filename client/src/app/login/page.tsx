@@ -64,17 +64,29 @@ export default function LoginPage() {
       if (result.success) {
         router.push('/dashboard');
       } else {
-        // Handle backend errors
-        if (result.errors) {
+        // Handle backend errors - show clear message for invalid credentials
+        if (result.message && (
+          result.message.toLowerCase().includes('invalid') ||
+          result.message.toLowerCase().includes('incorrect') ||
+          result.message.toLowerCase().includes('not found') ||
+          result.message.toLowerCase().includes('failed')
+        )) {
+          setErrors({ general: 'Login failed. Please check your credentials and try again.' });
+        } else if (result.errors) {
           const newErrors: any = {};
           Object.keys(result.errors).forEach(key => {
             if (Array.isArray(result.errors[key])) {
               newErrors[key] = result.errors[key][0];
             }
           });
-          setErrors(newErrors);
+          // If there are field-specific errors, show them; otherwise show general message
+          if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+          } else {
+            setErrors({ general: 'Login failed. Please check your credentials and try again.' });
+          }
         } else {
-          setErrors({ general: result.message });
+          setErrors({ general: result.message || 'Login failed. Please check your credentials and try again.' });
         }
       }
     } catch (error) {
