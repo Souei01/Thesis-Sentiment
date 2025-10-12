@@ -98,11 +98,11 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-6">
-          <h2 className="text-4xl font-bold leading-tight">
-            Understand what Students need and what they feel
+          <h2 className="text-7xl font-bold leading-tight">
+            Understand what Students need <br /> and what they feel
           </h2>
-          <p className="text-lg text-white/90 leading-relaxed">
-            Using AI-Powered Sentiment Analysis to gain clear, actionable insights from student feedback.
+          <p className="text-xl text-white/90 leading-relaxed">
+            Using AI-Powered Sentiment Analysis to gain clear, <br /> actionable insights from student feedback.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Log in</h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-md text-gray-500">
               Please login to continue to your account.
             </p>
           </div>
