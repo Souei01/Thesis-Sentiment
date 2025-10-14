@@ -1,0 +1,16 @@
+feedback_id,annotator_1,annotator_2,annotator_3
+1,joy,joy,satisfaction
+2,disappointment,disappointment,disappointment
+3,acceptance,acceptance,acceptance
+4,joy,satisfaction,joy
+5,boredom,boredom,acceptance
+6,satisfaction,satisfaction,satisfaction
+7,disappointment,boredom,disappointment
+8,acceptance,acceptance,acceptance
+9,joy,joy,joy
+10,disappointment,disappointment,disappointment
+11,satisfaction,joy,satisfaction
+12,boredom,boredom,boredom
+13,acceptance,acceptance,boredom
+14,joy,joy,satisfaction
+15,disappointment,disappointment,disappointment
