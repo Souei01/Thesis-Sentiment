@@ -204,6 +204,12 @@ if not DEBUG:
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF Settings - Exempt API endpoints
+CSRF_TRUSTED_ORIGINS = [
+    "https://thesis-sentiment-frontend.onrender.com",
+    "https://thesis-sentiment.onrender.com",
+]
+
 # REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
