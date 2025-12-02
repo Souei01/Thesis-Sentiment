@@ -63,6 +63,7 @@ export default function FeedbackDialog({
       courseId={course.id}
       courseName={course.name}
       courseCode={course.code}
+      instructor={course.instructor}
       onSubmit={handleSubmit}
       onClose={() => onOpenChange(false)}
     />

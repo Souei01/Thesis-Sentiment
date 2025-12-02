@@ -13,9 +13,14 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,6 +36,12 @@ ALLOWED_HOSTS = []
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
+
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'authentication.backends.EmailBackend',  # Custom email authentication
+    'django.contrib.auth.backends.ModelBackend',  # Default backend as fallback
+]
 
 
 # Application definition
@@ -85,25 +96,38 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Using SQLite for development (change to MySQL for production)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# Check for MySQL configuration (from .env or environment variables)
+DB_ENGINE = os.environ.get('DB_ENGINE', '').lower()
+DB_NAME = os.environ.get('DB_NAME', '')
 
-# For MySQL (uncomment and configure when ready):
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'sentiment_db',
-#         'USER': 'root',
-#         'PASSWORD': 'your_password',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#     }
-# }
+if DB_ENGINE == 'mysql' or DB_NAME:
+    # Use MySQL/MariaDB
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_NAME,
+            'USER': os.environ.get('DB_USER', 'root'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            },
+        }
+    }
+    
+    if not DATABASES['default']['NAME']:
+        raise ImproperlyConfigured('DB_NAME environment variable must be set when using MySQL')
+else:
+    # Fallback to SQLite (only if no DB config found)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("WARNING: Using SQLite database. Set DB_ENGINE=mysql in .env file to use MySQL/MariaDB.")
 
 
 # Password validation

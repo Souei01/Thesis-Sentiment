@@ -17,6 +17,7 @@ interface MultistepFeedbackFormProps {
   courseId: string;
   courseName: string;
   courseCode: string;
+  instructor?: string;
   onSubmit: (data: FeedbackFormData) => void;
   onClose: () => void;
 }
@@ -87,6 +88,7 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
   courseId,
   courseName,
   courseCode,
+  instructor,
   onSubmit,
   onClose
 }) => {
@@ -125,12 +127,77 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
     }));
   };
 
+  // Helper function to check if a comment is meaningful
+  const isValidComment = (text: string): boolean => {
+    if (!text || text.trim() === '') {
+      return false;
+    }
+
+    const trimmed = text.trim().toLowerCase();
+    
+    // List of invalid responses
+    const invalidResponses = [
+      'n/a', 'na', 'none', 'nothing', 'no', 'nope', 'nah',
+      'idk', "i don't know", 'dunno', 'not sure',
+      '.', '..', '...', '-', '--', '---', '_', '__', '___',
+      'no comment', 'no comments', 'no feedback',
+      'pass', 'skip', 'skipped',
+      'wala', 'wla', 'walang', 'walang sagot'
+    ];
+
+    // Check if response is in invalid list
+    if (invalidResponses.includes(trimmed)) {
+      return false;
+    }
+
+    // Check if response is only punctuation or special characters
+    if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+      return false;
+    }
+
+    // Require at least 3 characters of actual content
+    const alphanumericContent = trimmed.replace(/[^a-zA-Z0-9]/g, '');
+    if (alphanumericContent.length < 3) {
+      return false;
+    }
+
+    return true;
+  };
+
   const validateCurrentStep = (): boolean => {
     const step = FORM_STEPS[currentStep - 1];
     const sectionData = formData[step.key as keyof FeedbackFormData];
 
-    // Comments section (step 9) - all fields are optional
+    // Comments section (step 9) - validate meaningful responses
     if (currentStep === 9) {
+      const comments = formData.comments;
+      const hasAtLeastOneComment = 
+        isValidComment(comments.recommendedChanges) ||
+        isValidComment(comments.likeBest) ||
+        isValidComment(comments.likeLeast) ||
+        isValidComment(comments.additionalComments);
+
+      if (!hasAtLeastOneComment) {
+        alert('Please provide at least one meaningful comment. Avoid responses like "N/A", "none", or "." - we value your constructive feedback.');
+        return false;
+      }
+
+      // Validate each non-empty comment
+      const commentFields = [
+        { value: comments.recommendedChanges, label: 'recommended changes' },
+        { value: comments.likeBest, label: 'what you liked best' },
+        { value: comments.likeLeast, label: 'what you liked least' },
+        { value: comments.additionalComments, label: 'additional comments' }
+      ];
+
+      for (const field of commentFields) {
+        // If there's text, it must be valid
+        if (field.value && field.value.trim() !== '' && !isValidComment(field.value)) {
+          alert(`Please provide a meaningful response for "${field.label}". Avoid responses like "N/A", "none", or just punctuation marks.`);
+          return false;
+        }
+      }
+
       return true;
     }
 
@@ -508,7 +575,10 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
             <div className="mb-4 sm:mb-6">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800">I. Comments on Strengths and Ways of Improvement</h3>
               <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Please provide your constructive feedback (optional)
+                Please provide meaningful, constructive feedback in at least one field
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                * At least one meaningful comment is required (avoid responses like "N/A", "none", or ".")
               </p>
             </div>
             <div className="space-y-2 sm:space-y-3">
@@ -574,6 +644,11 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
         <div className="mb-4 sm:mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Faculty Evaluation Form</h2>
           <p className="text-sm sm:text-base text-gray-600">{courseCode} - {courseName}</p>
+          {instructor && (
+            <p className="text-sm sm:text-base text-gray-700 font-medium mt-1">
+              Instructor: {instructor}
+            </p>
+          )}
           <p className="text-xs sm:text-sm text-gray-500 mt-2 flex items-center gap-2">
             <Save className="w-3 h-3 sm:w-4 sm:h-4" />
             Your progress is automatically saved. You can return to complete this form later.

@@ -1,0 +1,133 @@
+Year Implemented to Curriculum,Course,Year Level,Semester,Subject Code,Descriptive title,Description
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,First Semester,CC100,Introduction to Computing,"An overview of computing fundamentals, including computer hardware, software, and basic concepts in IT and computer science."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,First Semester,CC101,Computer Programming 1,"Introduces the basics of programming using structured approaches, focusing on problem-solving and logic development."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,First Semester,ACT115,Platform Technologies,"Covers foundational knowledge of operating systems, hardware platforms, and virtualization technologies."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,First Semester,ACT116,Human Computer Interactions,Explores the design and evaluation of user interfaces with an emphasis on usability and user-centered design.
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,Second Semester,CC102,Computer Programming 2,"Builds on Programming 1 by introducing advanced programming concepts such as functions, arrays, and file handling."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,Second Semester,ACT112,Data Communications and Networking 1,"Covers the basics of computer networks, data transmission, network models, and protocols."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,Second Semester,ACT123,Systems Administration,"Focuses on managing and maintaining computer systems, including user accounts, backups, and security policies."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,First Year,Second Semester,ACT124,Object Oriented Programming,"Teaches programming using the object-oriented paradigm, including classes, objects, inheritance, and polymorphism."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,First Semester,CC103,Data Structures and Algorithms,"Covers key data structures (like lists, stacks, queues, trees) and fundamental algorithms for searching and sorting."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,First Semester,CC104,Information Management 1,"Introduces database concepts, data modeling, and the use of relational databases and SQL."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,First Semester,ACT213,Professional Issues in Computing,"Examines ethical, legal, and social issues in computing, including intellectual property and professional conduct."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,First Semester,ACT214,Data Communications and Networking 2,"Builds on Networking 1, focusing on advanced topics such as routing, switching, and network troubleshooting."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,First Semester,ACT215,Network Administration,"Covers planning, configuring, and maintaining network infrastructure and services in organizational settings."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,Second Semester,ACT221,Internship,"Provides real-world work experience in a computing-related field, applying academic knowledge in a practical environment."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Second Year,Second Semester,ACT222,Network Security,"Introduces principles and practices of securing networks, including firewalls, encryption, and intrusion detection systems."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,First Semester,,GE Elect 1,"Elective courses from general education disciplines, designed to broaden students' perspectives and complement core IT knowledge."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,First Semester,,IT Elective 1,"Specialized courses in information technology chosen by the student to explore areas of interest or align with career goals (e.g., game development, blockchain, AI, etc.)."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,IT121,Discrete Mathematics,"Covers mathematical foundations essential for computing, including logic, set theory, combinatorics, and graph theory."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,,GE Elect 2,"Elective courses from general education disciplines, designed to broaden students' perspectives and complement core IT knowledge."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,IT221,Integrative Programming and Technologies,Focuses on integrating multiple programming technologies and frameworks to build more complex and connected applications.
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,,IT Elective 2,"Specialized courses in information technology chosen by the student to explore areas of interest or align with career goals (e.g., game development, blockchain, AI, etc.)."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,IT224,Mobile Computing,"Explores development of applications for mobile devices, considering constraints like limited resources, mobility, and connectivity."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Second Semester,IT225,Advance Database Systems,"Covers advanced database concepts such as distributed databases, data warehousing, and NoSQL systems."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Summer,IT331,Capstone Project and Research 1,"The first phase of a major student project involving problem identification, proposal writing, and initial development work."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Third Year,Summer,IT332,Information Assurance and Security 2,"Focuses on advanced security practices and principles including risk management, cryptography, and secure system design."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,IT212,Quantitative Methods,Introduces statistical and analytical techniques used for decision-making and data interpretation in IT.
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,CC105,Applications Development and Emerging Technologies,"Explores current and emerging technologies and frameworks in application development, emphasizing rapid prototyping and innovation."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,IT312,Systems Integration and Architecture 1,"Introduces systems integration concepts and enterprise architecture, focusing on interoperability, scalability, and system design."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,,IT Elective 3,"Specialized courses in information technology chosen by the student to explore areas of interest or align with career goals (e.g., game development, blockchain, AI, etc.)."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,IT314,Data Analytics,"Covers techniques for collecting, analyzing, and interpreting data to support decision-making and uncover insights"
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,IT441,Capstone Project and Research 2,"Final phase of the capstone project, including implementation, testing, documentation, and final presentation."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,First Semester,IT413,Cybersecurity,"Covers practical approaches to securing systems and networks, with emphasis on threat detection, prevention, and response."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,IT321,Internet of Things,"Introduces IoT concepts, architecture, and applications, including sensor integration, data collection, and automation."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,IT322,Machine Learning,"Covers foundational machine learning techniques, including supervised and unsupervised learning, with practical applications."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,,IT Elective 4,"Specialized courses in information technology chosen by the student to explore areas of interest or align with career goals (e.g., game development, blockchain, AI, etc.)."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,,GE Elective 3,"Elective courses from general education disciplines, designed to broaden students' perspectives and complement core IT knowledge."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,IT421,Cloud Computing,"Covers cloud service models (IaaS, PaaS, SaaS), deployment strategies, and hands-on experience with cloud platforms."
+2021,ASSOCIATE IN COMPUTER TECHNOLOGY,Fourth Year,Second Semester,IT422,Practicum/Industry Immersion,"Hands-on work experience in the IT industry, allowing students to apply classroom knowledge in a real-world environment."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,First Semester,CC100,Introduction to Computing,"An overview of computing fundamentals, including computer hardware, software, and basic concepts in IT and computer science."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,First Semester,CC101,Computer Programming 1,"Introduces the basics of programming using structured approaches, focusing on problem-solving and logic development."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,IT112,Discrete Mathematics,"Introduces foundational mathematical concepts used in computing, such as logic, sets, functions, relations, combinatorics, and graphs."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,IT114,Operating Systems,"Covers the design and functionality of operating systems, including process management, memory management, file systems, and scheduling."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,CC102,Computer Programming 2,"Builds on introductory programming concepts by introducing more advanced structures like arrays, functions, recursion, and file handling."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,IT121,Object-Oriented Programming,"Focuses on the principles of object-oriented design and programming, including encapsulation, inheritance, and polymorphism."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,IT123,Platform Technologies,"Explores various computing platforms and environments, such as hardware architecture, virtualization, and operating systems."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,IT125,Human-Computer Interactions,"Studies how users interact with computer systems, focusing on interface design, usability, and user-centered development practices."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,CC103,Data Strutures and Algorithms,"Covers fundamental data structures (lists, stacks, queues, trees, graphs) and key algorithms for sorting, searching, and traversal."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT122,Integrative Programming and Technologies,"Teaches integration of different programming languages, APIs, and platforms to build cohesive and interoperable applications."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT124,Networking 1,"Introduces computer networking basics, including network models (OSI, TCP/IP), protocols, and basic configuration."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT126,Quantitative Methods,"Applies mathematical and statistical techniques for solving real-world problems in IT, including data analysis and modeling."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,CC104,Information Management 1,"Covers database fundamentals, relational models, data normalization, and SQL for managing and retrieving structured data."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,IT131,Advanced Database Systems,"Delves into advanced topics in database systems such as distributed databases, transactions, NoSQL, and database performance tuning."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,IT133,Networking 2,"Builds on Networking 1, covering routing, switching, network protocols, security, and network administration tools."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,IT135,Systems Integration and Architecture ,"Covers the design and integration of complex IT systems, focusing on system components, enterprise architecture, and interoperability."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,IT137,Web Systems and Technologies,"Introduces web development fundamentals including HTML, CSS, JavaScript, server-side scripting, and web application frameworks."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,IT139,IT Elective 1,Student-chosen specialized IT course that aligns with personal interests or career paths
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,First Semester,CC105,Applications Development and Emerging Technologies,"Focuses on rapid application development using new and emerging technologies, tools, and methodologies."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,Second Semester,IT130,Information Assurance and Security 1,"Covers foundational principles of information security, including confidentiality, integrity, availability, and basic defense mechanisms."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,Second Semester,IT132,Software Engineering,"Introduces the software development life cycle (SDLC), methodologies (Agile, Waterfall), and tools for developing quality software systems."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,Second Semester,IT134,Social and Professional Practice,"Explores ethical, legal, and professional issues in computing, including social responsibility, digital citizenship, and workplace conduct."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,Second Semester,IT136,IT Elective 2,Continuation of elective courses that provide depth in emerging or advanced IT areas.
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year,Second Semester,IT138,IT Elective 3,Another customizable IT course that supports specialization and skills enhancement.
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Summer,IT140,Capstone Project and Research 1,"The first phase of a year-long project requiring students to define a problem, conduct background research, and propose an IT solution."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT141,Capstone Project and Research 2,"Continuation of Capstone 1 focusing on the implementation, testing, documentation, and final presentation of the IT project."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT143,Information Assurance and Security 2,"Advanced study of IT security, covering topics like threat analysis, security policies, encryption, intrusion detection, and risk management."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT145,IT Elective 4,"Final elective course in the program, allowing students to explore advanced or niche topics in IT."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,Second Semester,IT142,Systems Administration and Maintenance,"Focuses on managing and maintaining computer systems and networks, including user administration, backups, updates, and troubleshooting."
+2018,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,Second Semester,IT144,Practicum / Industry Immersion,"Supervised work experience in a real-world IT environment, allowing students to apply academic knowledge and develop professional skills."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,First Year,First Semester,CC100,Introduction to Computing,"An overview of computing concepts, history, hardware, software, and the role of IT and CS in society."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,First Year,First Semester,CC101,Computer Programming 1,"Introduces fundamental programming concepts using a high-level language, focusing on logic, syntax, variables, and control structures."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,First Year,Second Semester,CS111,Discrete Structures 1,"Covers foundational mathematical concepts for computing such as logic, sets, functions, and relations."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,First Year,Second Semester,CC102,Computer Programmming 2,"Builds on Programming 1 by introducing more complex constructs like arrays, functions, recursion, and file handling."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,First Semester,CS121,Object-Oriented Programming,"Focuses on the object-oriented programming paradigm, including classes, objects, inheritance, and polymorphism."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,First Semester,CS123,Discrete Structures 2,"Continuation of Discrete Structures 1, covering more advanced topics like combinatorics, graph theory, and finite state machines."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,First Semester,CS125,Digital Design,"Introduces the principles of digital logic design, including number systems, logic gates, combinational and sequential circuits."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,First Semester,CS127,Human-Computer Interactions,"Explores user interface design, user experience, and usability principles to create human-centered systems"
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,First Semester,CC103,Data Structures and Algorithms,"Covers fundamental data structures (e.g., lists, stacks, trees) and basic algorithms for sorting, searching, and data manipulation."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CS120,Architecture and Organizations,"Examines computer architecture, including CPU design, memory hierarchy, instruction sets, and data representation."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CS122,Design and Analysis of Algorithms,"Focuses on algorithm design techniques (e.g., divide and conquer, greedy, dynamic programming) and complexity analysis."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CS124,Programming Languages,"Introduces the concepts behind programming languages including syntax, semantics, paradigms (procedural, functional, object-oriented), and language design."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CS126,Networks and Communications,"Covers fundamental networking concepts, protocols, and models (OSI, TCP/IP), as well as data transmission and communication systems."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CS128,CS Elective 1,"Student-selected course focusing on a specialized or emerging area in computer science such as AI, game development, or cybersecurity."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Second Year,Second Semester,CC104,Information Management 1,"Introduces the fundamentals of databases, data modeling, relational databases, and SQL."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS131,Automata Theory and Formal Languages,"Covers abstract computational models (finite automata, pushdown automata, Turing machines) and formal languages used in language recognition and compiler design."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS133,Information Assurance and Security,"Introduces principles of securing data and systems, including cryptography, access control, network security, and threat analysis."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS135,Advanced Database Systems,"Explores advanced database topics such as normalization, transaction management, indexing, distributed databases, and NoSQL systems."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS137,Software Engineering 1,"Introduces the software development lifecycle, requirements analysis, and software design methodologies including Agile and traditional approaches."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS139,Web Programming and Development,"Covers both client-side and server-side web development, including HTML, CSS, JavaScript, backend frameworks, and database integration."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CS140,CS Elective 2,"A specialized elective course allowing students to explore a focused area of Computer Science such as mobile apps, AI, robotics, or cloud computing."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,First Semester,CC105,Applications Development and Emerging Technologies,"Focuses on the rapid development of applications using current and emerging technologies such as mobile, cloud, and cross-platform tools."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Second Semester,CS130,Thesis 1,"First phase of the undergraduate thesis, focusing on topic selection, literature review, problem identification, and proposal preparation."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Second Semester,CS132,Software Engineering 2,"Continuation of Software Engineering 1, focusing on software implementation, testing, maintenance, documentation, and project management."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Second Semester,CS134,Operating Systems,"Explores the components and functions of operating systems including memory management, process scheduling, file systems, and concurrency."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Second Semester,CS136,Modeling and Simulation,Introduces concepts of modeling real-world systems and simulating their behavior using computational tools and mathematical techniques.
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Second Semester,CS138,CS Elective 3,A customizable course that allows students to specialize in advanced topics in Computer Science aligned with career interests or emerging trends.
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Third Year ,Summer,CS141,Practicum / Industry Immersion,"Provides hands-on experience in an actual IT or computing environment, applying classroom knowledge to solve real-world problems."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Fourth Year,First Semester,CS143,thesis 2,"The final phase of the thesis project involving implementation, analysis, evaluation, documentation, and defense."
+2018,BACHELOR OF SCIENCE IN COMPUTER SCIENCE,Fourth Year,Second Semester,CS142,Social Issues and Professional Practice,"Explores ethical, legal, and societal impacts of computing technologies and promotes professional responsibility and conduct in the IT field."
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,First Semester,CC100,Introduction to Computing,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,First Semester,CC101,Computer Programming 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,First Semester,,GE Elect 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,IT121,Discrete Mathematics,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,IT122,Introduction to Human-Computer Interaction,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,CC102,Computer Programming 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,First Year,Second Semester,,GE Elect 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,,IT Elective 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,IT212,Quantitative Methods,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,IT213,Social and Professional Practice,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,CC103,Data Structures and Algorithms,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,First Semester,CC104,Information Management 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT221,Integrative Programming and Technologies,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT222,Networking 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,,IT Elective 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT224,Mobile Computing,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Second Year,Second Semester,IT225,Advanced Database Systems,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,First Semester,CC105,Applications Development and Emerging Technologies,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,First Semester,IT311,Networking 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,First Semester,IT312,Systems Integration and Architecture 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,First Semester,,IT Elective 3,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,First Semester,IT314,Data Analytics,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Second Semester,IT321,Internet of Things,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Second Semester,IT322,Machine Learning,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Second Semester,IT323,Information Assurance and Security,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Second Semester,,IT Elective 4,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Second Semester,,GE Elect 3,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Summer,IT331,Capstone Project and Research 1,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Third Year ,Summer,IT332,Information Assurance and Security 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT411,Capstone Project and Research 2,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT412,Systems Administration and Maintenance,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,First Semester,IT413,Cybersecurity,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,Second Semester,IT421,Cloud Computing,
+2023,BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY,Fourth Year,Second Semester,IT422,Practicum / Industry Immersion,

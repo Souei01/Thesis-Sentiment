@@ -24,6 +24,7 @@ MANIFEST
 
 # Virtual Environments
 venv/
+venv_ml/
 env/
 ENV/
 .venv
@@ -37,27 +38,38 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
+server/__pycache__/
+server/*/__pycache__/
+server/*/*/__pycache__/
 
-# Machine Learning Models (large files)
+# Machine Learning Models (large files - hosted on HuggingFace)
+server/ml_models/
 *.bin
 *.pt
 *.pth
 *.h5
 *.pkl
 *.joblib
-api/ml_models/mbert/mbert/pytorch_model.bin
-server/api/ml_models/mbert/mbert/pytorch_model.bin
+*.safetensors
+api/ml_models/
 mbert-emotion-finetuned/
 model_backups/
 logs/
 logs-test/
+results/
 
-# Training Data & Results
+# Training Data & Results (keep only necessary data)
 train_data.json
 val_data.json
 label_mapping.json
 emotion_labeling_results.csv
 xlm_emotion_labeling_results.csv
+server/csv_exports/*.csv
+server/csv_exports/*.txt
+*.txt
+!requirements.txt
+!server/data/annotations/train_data.csv
+!server/data/annotations/test_data.csv
 
 # Node.js / Next.js
 node_modules/
@@ -142,3 +154,12 @@ cython_debug/
 *.md
 !README.md
 !client/README.md
+
+# Sensitive tokens and credentials
+upload_xlm_roberta.py
+upload_models_to_hf.py
+
+# Unnecessary for deployment
+server/9_deprecated/
+*.bat
+*.sh

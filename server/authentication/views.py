@@ -14,6 +14,11 @@ class LoginView(APIView):
     
     def post(self, request):
         try:
+            # Debug logging
+            print(f"=== Login Request Debug ===")
+            print(f"Request data: {request.data}")
+            print(f"Content-Type: {request.content_type}")
+            
             serializer = LoginSerializer(data=request.data)
             
             if serializer.is_valid():
@@ -40,6 +45,9 @@ class LoginView(APIView):
             
             # Handle validation errors
             error_message = 'Login failed'
+            
+            # Debug logging for errors
+            print(f"Serializer errors: {serializer.errors}")
             
             # Check if there's a non_field_errors (general validation error)
             if 'non_field_errors' in serializer.errors:
@@ -147,3 +155,53 @@ class ChangePasswordView(APIView):
                 'success': False,
                 'message': 'An error occurred while changing password'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserListView(APIView):
+    """
+    Get list of users filtered by role (admin only)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Only admin can access this endpoint
+            if request.user.role != 'admin':
+                return Response({
+                    'success': False,
+                    'message': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get role from query params
+            role = request.query_params.get('role', None)
+            
+            # Filter users by role if provided
+            if role:
+                users = User.objects.filter(role=role).order_by('last_name', 'first_name')
+            else:
+                users = User.objects.all().order_by('last_name', 'first_name')
+            
+            # RBAC: Department head restrictions for faculty list
+            if role == 'faculty' and request.user.admin_subrole:
+                if request.user.admin_subrole == 'dept_head_cs':
+                    # CS Department Head: only CS faculty
+                    users = users.filter(department='CS')
+                elif request.user.admin_subrole == 'dept_head_it':
+                    # IT Department Head: IT and ICT faculty
+                    users = users.filter(department__in=['IT', 'ICT'])
+                # dean has no restrictions (sees all)
+            
+            # Serialize the users
+            serializer = UserSerializer(users, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"User list fetch error: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'An error occurred while fetching users'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

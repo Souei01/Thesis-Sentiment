@@ -6,7 +6,7 @@ import re
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'role', 'student_id', 'department', 'is_active', 'created_at']
+        fields = ['id', 'email', 'username', 'role', 'admin_subrole', 'student_id', 'department', 'is_active', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 class LoginSerializer(serializers.Serializer):
@@ -18,9 +18,10 @@ class LoginSerializer(serializers.Serializer):
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
             raise serializers.ValidationError("Invalid email format")
         
-        # Check if email ends with wmsu.edu.ph
-        if not value.endswith('@wmsu.edu.ph'):
-            raise serializers.ValidationError("Please use your WMSU email address")
+        # Temporarily commented out for debugging
+        # # Check if email ends with wmsu.edu.ph
+        # if not value.endswith('@wmsu.edu.ph'):
+        #     raise serializers.ValidationError("Please use your WMSU email address")
         
         return value.lower()
     
@@ -44,8 +45,8 @@ class LoginSerializer(serializers.Serializer):
             if not user.is_active:
                 raise serializers.ValidationError("This account has been deactivated")
             
-            # Authenticate user
-            user = authenticate(username=email, password=password)
+            # Authenticate user - use email as the username field since USERNAME_FIELD = 'email'
+            user = authenticate(request=self.context.get('request'), email=email, password=password)
             
             if not user:
                 raise serializers.ValidationError("Invalid email or password")

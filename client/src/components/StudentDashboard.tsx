@@ -16,24 +16,31 @@ import {
 
 interface StudentDashboardProps {
   courses: Course[];
-  onSubmitFeedback: (courseId: string, feedback: FeedbackFormData) => void;
+  onSubmitFeedback?: (courseId: string, feedback: FeedbackFormData) => void;
+  onRateCourse?: (courseId: string) => void;
 }
 
-export default function StudentDashboard({ courses, onSubmitFeedback }: StudentDashboardProps) {
+export default function StudentDashboard({ courses, onSubmitFeedback, onRateCourse }: StudentDashboardProps) {
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
 
   const handleRateCourse = (courseId: string) => {
-    const course = courses.find((c) => c.id === courseId);
-    if (course) {
-      setSelectedCourse(course);
-      setFeedbackDialogOpen(true);
+    if (onRateCourse) {
+      onRateCourse(courseId);
+    } else {
+      const course = courses.find((c) => c.id === courseId);
+      if (course) {
+        setSelectedCourse(course);
+        setFeedbackDialogOpen(true);
+      }
     }
   };
 
   const handleSubmitFeedback = (courseId: string, feedback: FeedbackFormData) => {
-    onSubmitFeedback(courseId, feedback);
+    if (onSubmitFeedback) {
+      onSubmitFeedback(courseId, feedback);
+    }
     setFeedbackDialogOpen(false);
   };
 
