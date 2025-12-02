@@ -97,37 +97,55 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Check for MySQL configuration (from .env or environment variables)
-DB_ENGINE = os.environ.get('DB_ENGINE', '').lower()
-DB_NAME = os.environ.get('DB_NAME', '')
+import dj_database_url
 
-if DB_ENGINE == 'mysql' or DB_NAME:
-    # Use MySQL/MariaDB
+# Check for DATABASE_URL (Render/Heroku style - PostgreSQL)
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+
+if DATABASE_URL:
+    # Use PostgreSQL from DATABASE_URL
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME,
-            'USER': os.environ.get('DB_USER', 'root'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '3306'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            },
-        }
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-    
-    if not DATABASES['default']['NAME']:
-        raise ImproperlyConfigured('DB_NAME environment variable must be set when using MySQL')
+    print("✅ Using PostgreSQL database from DATABASE_URL")
 else:
-    # Fallback to SQLite (only if no DB config found)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    # Check for MySQL configuration (from .env or environment variables)
+    DB_ENGINE = os.environ.get('DB_ENGINE', '').lower()
+    DB_NAME = os.environ.get('DB_NAME', '')
+
+    if DB_ENGINE == 'mysql' or DB_NAME:
+        # Use MySQL/MariaDB
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': DB_NAME,
+                'USER': os.environ.get('DB_USER', 'root'),
+                'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+                'HOST': os.environ.get('DB_HOST', 'localhost'),
+                'PORT': os.environ.get('DB_PORT', '3306'),
+                'OPTIONS': {
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                    'charset': 'utf8mb4',
+                },
+            }
         }
-    }
+        
+        if not DATABASES['default']['NAME']:
+            raise ImproperlyConfigured('DB_NAME environment variable must be set when using MySQL')
+        print("✅ Using MySQL/MariaDB database")
+    else:
+        # Fallback to SQLite (only if no DB config found)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+        print("WARNING: Using SQLite database. Set DB_ENGINE=mysql in .env file to use MySQL/MariaDB.")
     print("WARNING: Using SQLite database. Set DB_ENGINE=mysql in .env file to use MySQL/MariaDB.")
 
 
