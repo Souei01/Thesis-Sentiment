@@ -1,0 +1,46 @@
+services:
+  # Django Backend
+  - type: web
+    name: thesis-sentiment-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: server.settings
+      - key: HUGGINGFACE_MODEL_ID
+        value: Souei0101/xlm-roberta-emotion-classification
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: thesis-sentiment-db
+          property: connectionString
+    rootDir: server
+    
+  # Next.js Frontend
+  - type: web
+    name: thesis-sentiment-frontend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: NEXT_PUBLIC_API_URL
+        value: https://thesis-sentiment-backend.onrender.com
+    rootDir: client
+
+databases:
+  - name: thesis-sentiment-db
+    databaseName: sentiment_db
+    user: sentiment_user
+    plan: free

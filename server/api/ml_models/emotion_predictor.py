@@ -39,18 +39,27 @@ class EmotionPredictor:
     def _initialize(self):
         """Load the model and tokenizer"""
         try:
-            # Path to the fine-tuned model
-            model_path = Path(__file__).parent.parent.parent / 'ml_models' / 'xlm_roberta_finetuned'
+            # Try HuggingFace Hub first (for deployment), fallback to local
+            import os
+            model_id = os.getenv('HUGGINGFACE_MODEL_ID', 'Souei0101/xlm-roberta-emotion-classification')
             
-            logger.info(f"Loading XLM-RoBERTa model from {model_path}")
+            # Check if local model exists
+            local_model_path = Path(__file__).parent.parent.parent / 'ml_models' / 'xlm_roberta_finetuned'
+            
+            if local_model_path.exists():
+                logger.info(f"Loading XLM-RoBERTa model from local path: {local_model_path}")
+                model_source = str(local_model_path)
+            else:
+                logger.info(f"Loading XLM-RoBERTa model from HuggingFace Hub: {model_id}")
+                model_source = model_id
             
             # Check if CUDA is available
             self._device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             logger.info(f"Using device: {self._device}")
             
             # Load tokenizer and model
-            self._tokenizer = AutoTokenizer.from_pretrained(str(model_path))
-            self._model = AutoModelForSequenceClassification.from_pretrained(str(model_path))
+            self._tokenizer = AutoTokenizer.from_pretrained(model_source)
+            self._model = AutoModelForSequenceClassification.from_pretrained(model_source)
             self._model.to(self._device)
             self._model.eval()
             
