@@ -32,7 +32,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9om6$r(59o6b*9q844t#z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
+# Allow Render.com hostname
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+if not DEBUG:
+    ALLOWED_HOSTS.append('.onrender.com')  # Allow all Render.com subdomains
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
@@ -201,7 +204,15 @@ CORS_ALLOWED_ORIGINS = [
 
 # Production CORS settings
 if not DEBUG:
-    CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    cors_origins = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+    if cors_origins:
+        CORS_ALLOWED_ORIGINS = cors_origins.split(',')
+    else:
+        # Default production CORS origins
+        CORS_ALLOWED_ORIGINS = [
+            "https://thesis-sentiment-frontend.onrender.com",
+            "https://thesis-sentiment.onrender.com",
+        ]
 
 CORS_ALLOW_CREDENTIALS = True
 
