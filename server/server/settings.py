@@ -67,6 +67,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # Must be before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'server.disable_csrf.DisableCSRFMiddleware',  # Disable CSRF for API endpoints
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -209,6 +210,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://thesis-sentiment-frontend.onrender.com",
     "https://thesis-sentiment.onrender.com",
 ]
+
+# Completely disable CSRF for API endpoints (since we use JWT)
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False
 
 # REST Framework Settings
 REST_FRAMEWORK = {
