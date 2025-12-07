@@ -9,7 +9,8 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 django.setup()
 
-from api.models import Enrollment, Feedback, User
+from api.models import Enrollment, Feedback
+from authentication.models import User
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from datetime import datetime, timedelta
