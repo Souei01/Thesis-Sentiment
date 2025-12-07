@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -187,22 +187,22 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
 
   // Filter and paginate data
   // Filter by search query
-  const filteredData = useMemo(() => {
-    if (!stats) return [];
-    
-    const currentData = activeTab === 'respondents' ? (stats.respondents || []) : (stats.non_respondents || []);
-    
-    if (!searchQuery.trim()) return currentData;
-    
-    const query = searchQuery.toLowerCase();
-    return currentData.filter(student => 
-      student.name.toLowerCase().includes(query) ||
-      student.email.toLowerCase().includes(query) ||
-      student.student_id.toLowerCase().includes(query) ||
-      student.course.toLowerCase().includes(query) ||
-      student.section.toLowerCase().includes(query)
-    );
-  }, [stats, searchQuery, activeTab]);
+  if (!stats) return null;
+  
+  const currentData = activeTab === 'respondents' ? (stats.respondents || []) : (stats.non_respondents || []);
+  
+  const filteredData = !searchQuery.trim() 
+    ? currentData 
+    : currentData.filter(student => {
+        const query = searchQuery.toLowerCase();
+        return (
+          student.name.toLowerCase().includes(query) ||
+          student.email.toLowerCase().includes(query) ||
+          student.student_id.toLowerCase().includes(query) ||
+          student.course.toLowerCase().includes(query) ||
+          student.section.toLowerCase().includes(query)
+        );
+      });
   
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -210,7 +210,7 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, endIndex);
   
-  const currentDataLength = activeTab === 'respondents' ? (stats?.respondents?.length || 0) : (stats?.non_respondents?.length || 0);
+  const currentDataLength = currentData.length;
   
   // Reset to page 1 when search or tab changes
   useEffect(() => {
