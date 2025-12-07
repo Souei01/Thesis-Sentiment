@@ -107,40 +107,41 @@ class Command(BaseCommand):
         # CREATE COURSES
         # ============================================
         self.stdout.write(self.style.SUCCESS('\n📖 Creating Courses...'))
-        courses_data = []
-        
-        # CS Courses
-        for year in year_levels:
-            for i in range(1, 6):  # 5 courses per year level
-                courses_data.append({
-                    'code': f'CS{year}0{i}',
-                    'name': f'Computer Science {year}0{i}',
-                    'department': 'CS',
-                    'year_level': year,
-                    'units': 3
-                })
-        
-        # IT Courses
-        for year in year_levels:
-            for i in range(1, 6):
-                courses_data.append({
-                    'code': f'IT{year}0{i}',
-                    'name': f'Information Technology {year}0{i}',
-                    'department': 'IT',
-                    'year_level': year,
-                    'units': 3
-                })
-        
-        # ICT Courses
-        for year in year_levels:
-            for i in range(1, 6):
-                courses_data.append({
-                    'code': f'ICT{year}0{i}',
-                    'name': f'ICT {year}0{i}',
-                    'department': 'ICT',
-                    'year_level': year,
-                    'units': 3
-                })
+        courses_data = [
+            # CS Third Year - First Semester
+            {'code': 'CS131', 'name': 'Automata Theory and Formal Languages', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS133', 'name': 'Information Assurance and Security', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS135', 'name': 'Advanced Database Systems', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS137', 'name': 'Software Engineering 1', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS139', 'name': 'Web Programming and Development', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS140', 'name': 'CS Elective 2', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CC105', 'name': 'Applications Development and Emerging Technologies', 'department': 'CS', 'year_level': 3, 'units': 3},
+            
+            # CS Third Year - Second Semester
+            {'code': 'CS130', 'name': 'Thesis 1', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS132', 'name': 'Software Engineering 2', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS134', 'name': 'Operating Systems', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS136', 'name': 'Modeling and Simulation', 'department': 'CS', 'year_level': 3, 'units': 3},
+            {'code': 'CS138', 'name': 'CS Elective 3', 'department': 'CS', 'year_level': 3, 'units': 3},
+            
+            # IT Third Year - First Semester (2023 Curriculum)
+            {'code': 'IT311', 'name': 'Networking 2', 'department': 'IT', 'year_level': 3, 'units': 3},
+            {'code': 'IT312', 'name': 'Systems Integration and Architecture 1', 'department': 'IT', 'year_level': 3, 'units': 3},
+            {'code': 'IT314', 'name': 'Data Analytics', 'department': 'IT', 'year_level': 3, 'units': 3},
+            {'code': 'CC105IT', 'name': 'Applications Development and Emerging Technologies', 'department': 'IT', 'year_level': 3, 'units': 3},
+            
+            # IT Third Year - Second Semester (2023 Curriculum)
+            {'code': 'IT321', 'name': 'Internet of Things', 'department': 'IT', 'year_level': 3, 'units': 3},
+            {'code': 'IT322', 'name': 'Machine Learning', 'department': 'IT', 'year_level': 3, 'units': 3},
+            {'code': 'IT323', 'name': 'Information Assurance and Security', 'department': 'IT', 'year_level': 3, 'units': 3},
+            
+            # ICT Third Year Courses (using similar IT course names)
+            {'code': 'ICT311', 'name': 'Advanced Networking', 'department': 'ICT', 'year_level': 3, 'units': 3},
+            {'code': 'ICT312', 'name': 'Systems Architecture', 'department': 'ICT', 'year_level': 3, 'units': 3},
+            {'code': 'ICT313', 'name': 'Data Science', 'department': 'ICT', 'year_level': 3, 'units': 3},
+            {'code': 'ICT321', 'name': 'IoT Applications', 'department': 'ICT', 'year_level': 3, 'units': 3},
+            {'code': 'ICT322', 'name': 'AI and Machine Learning', 'department': 'ICT', 'year_level': 3, 'units': 3},
+        ]
         
         courses = {}
         courses_created = 0
@@ -170,36 +171,48 @@ class Command(BaseCommand):
         academic_year = "2024-2025"
         semester = "1st"
         
+        # Map courses to departments for assignment
+        cs_courses = [c['code'] for c in courses_data if c['department'] == 'CS']
+        it_courses = [c['code'] for c in courses_data if c['department'] == 'IT']
+        ict_courses = [c['code'] for c in courses_data if c['department'] == 'ICT']
+        
+        course_map = {
+            'CS': cs_courses,
+            'IT': it_courses,
+            'ICT': ict_courses
+        }
+        
         for dept in departments:
-            for year_level in year_levels:
-                for section in sections_per_year:
-                    section_name = f'{year_level}{section}'
+            # Only assign courses to year 3 students since we only have year 3 courses
+            year_level = 3
+            dept_courses = course_map.get(dept, [])
+            
+            for section in sections_per_year:
+                section_name = f'{year_level}{section}'
+                
+                # Assign all courses for this department to each section
+                for idx, course_code in enumerate(dept_courses):
+                    # Rotate faculty for variety
+                    faculty_index = (idx % faculty_per_dept) + 1
+                    faculty_key = f'{dept}_{faculty_index}'
                     
-                    # Assign 5 courses per section
-                    for course_num in range(1, 6):
-                        course_code = f'{dept}{year_level}0{course_num}'
-                        
-                        # Rotate faculty for variety (use modulo to cycle through faculty)
-                        faculty_index = ((year_level - 1) * 5 + course_num - 1) % faculty_per_dept + 1
-                        faculty_key = f'{dept}_{faculty_index}'
-                        
-                        if course_code in courses and faculty_key in faculty_users:
-                            assignment, created = CourseAssignment.objects.get_or_create(
-                                course=courses[course_code],
-                                instructor=faculty_users[faculty_key],
-                                year_level=year_level,
-                                section=section_name,
-                                department=dept,
-                                semester=semester,
-                                academic_year=academic_year,
-                                defaults={'is_active': True}
-                            )
-                            if created:
-                                assignments_created += 1
-                                enrollment_count = assignment.enrollments.count()
-                                total_enrollments += enrollment_count
-                                if assignments_created % 10 == 0:
-                                    self.stdout.write(f'  ... {assignments_created} assignments created, {total_enrollments} students enrolled')
+                    if course_code in courses and faculty_key in faculty_users:
+                        assignment, created = CourseAssignment.objects.get_or_create(
+                            course=courses[course_code],
+                            instructor=faculty_users[faculty_key],
+                            year_level=year_level,
+                            section=section_name,
+                            department=dept,
+                            semester=semester,
+                            academic_year=academic_year,
+                            defaults={'is_active': True}
+                        )
+                        if created:
+                            assignments_created += 1
+                            enrollment_count = assignment.enrollments.count()
+                            total_enrollments += enrollment_count
+                            if assignments_created % 10 == 0:
+                                self.stdout.write(f'  ... {assignments_created} assignments created, {total_enrollments} students enrolled')
         
         self.stdout.write(self.style.SUCCESS(f'✓ Created {assignments_created} course assignments'))
         self.stdout.write(self.style.SUCCESS(f'✓ Auto-enrolled {total_enrollments} students'))
