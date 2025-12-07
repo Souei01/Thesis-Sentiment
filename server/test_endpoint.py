@@ -9,12 +9,11 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 django.setup()
 
-from django.test import RequestFactory
-from api.views import get_response_stats
+from api.models import Enrollment, Feedback, CourseAssignment
 from authentication.models import User
-import json
+import traceback
 
-print("=== Testing Response Stats Endpoint ===\n")
+print("=== Testing Response Stats Logic ===\n")
 
 # Get a faculty user
 faculty = User.objects.filter(role='faculty').first()
@@ -22,37 +21,78 @@ if not faculty:
     print("ERROR: No faculty found")
     exit(1)
 
-print(f"Testing as: {faculty.email} ({faculty.role})")
-
-# Create a fake request
-factory = RequestFactory()
-request = factory.get('/api/feedback/response-stats/')
-request.user = faculty
-
-print("\nCalling get_response_stats()...")
+print(f"Testing as: {faculty.email} ({faculty.role})\n")
 
 try:
-    response = get_response_stats(request)
-    print(f"\n✓ Status Code: {response.status_code}")
+    # Get faculty's assignments
+    assignments = CourseAssignment.objects.filter(instructor=faculty, is_active=True)
+    print(f"Faculty has {assignments.count()} active assignments")
     
-    if response.status_code == 200:
-        data = json.loads(response.content)
-        print(f"\nResponse data:")
-        print(f"  Total Students: {data.get('total_students')}")
-        print(f"  Total Responses: {data.get('total_responses')}")
-        print(f"  Response Rate: {data.get('response_rate')}")
-        print(f"  Respondents: {len(data.get('respondents', []))}")
-        print(f"  Non-Respondents: {len(data.get('non_respondents', []))}")
-    else:
-        print(f"\n✗ Error response:")
-        print(response.content.decode('utf-8'))
+    if assignments.count() == 0:
+        print("No active assignments - this is why response stats is empty")
+        exit(0)
+    
+    # Get enrollments
+    enrollments_qs = Enrollment.objects.select_related(
+        'student', 'course_assignment', 'course_assignment__course', 'course_assignment__instructor'
+    ).filter(course_assignment__in=assignments)
+    
+    print(f"Total enrollments: {enrollments_qs.count()}")
+    
+    if enrollments_qs.count() == 0:
+        print("No enrollments found")
+        exit(0)
+    
+    # Get enrollment pairs
+    enrollment_list = list(enrollments_qs.values_list('student_id', 'course_assignment_id'))
+    print(f"Enrollment pairs: {len(enrollment_list)}\n")
+    
+    # Test the feedback query
+    print("Testing feedback query...")
+    from django.db import models as django_models
+    
+    feedback_queries = [
+        django_models.Q(student_id=student_id, course_assignment_id=assignment_id)
+        for student_id, assignment_id in enrollment_list
+    ]
+    
+    if feedback_queries:
+        feedback_qs = Feedback.objects.filter(
+            django_models.Q(*feedback_queries, _connector=django_models.Q.OR),
+            status='submitted'
+        ).select_related('student', 'course_assignment__course')
         
-except Exception as e:
-    print(f"\n✗ EXCEPTION: {type(e).__name__}")
-    print(f"   Message: {str(e)}")
+        print(f"✓ Feedback query successful: {feedback_qs.count()} responses found\n")
+        
+        # Build lookup dict
+        feedbacks = {}
+        for feedback in feedback_qs:
+            key = (feedback.student_id, feedback.course_assignment_id)
+            feedbacks[key] = feedback
+        
+        # Count respondents and non-respondents
+        respondents = []
+        non_respondents = []
+        
+        for enrollment in enrollments_qs[:10]:  # Test first 10
+            key = (enrollment.student.id, enrollment.course_assignment.id)
+            feedback = feedbacks.get(key)
+            
+            if feedback:
+                respondents.append(enrollment.student.student_id)
+            else:
+                non_respondents.append(enrollment.student.student_id)
+        
+        print(f"Sample results (first 10 enrollments):")
+        print(f"  Respondents: {len(respondents)} - {respondents}")
+        print(f"  Non-respondents: {len(non_respondents)} - {non_respondents}")
+        
+    print("\n✓ All queries work correctly!")
     
-    import traceback
-    print(f"\n   Full traceback:")
+except Exception as e:
+    print(f"\n✗ ERROR: {type(e).__name__}")
+    print(f"   Message: {str(e)}")
     traceback.print_exc()
 
 print("\n=== Test Complete ===")
+

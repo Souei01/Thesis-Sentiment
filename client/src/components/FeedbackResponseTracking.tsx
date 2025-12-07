@@ -158,6 +158,14 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
     );
   }
 
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">No data available</div>
+      </div>
+    );
+  }
+
   // Filter and paginate data
   // Filter by search query
   const filteredData = useMemo(() => {
@@ -187,14 +195,6 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, activeTab]);
-
-  if (!stats) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">No data available</div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
