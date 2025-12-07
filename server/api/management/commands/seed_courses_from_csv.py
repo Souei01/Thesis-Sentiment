@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 elif 'INFORMATION TECHNOLOGY' in program:
                     department = 'IT'
                 elif 'COMPUTER TECHNOLOGY' in program:
-                    department = 'ICT'
+                    department = 'ACT'
                 else:
                     continue
                 
@@ -109,12 +109,12 @@ class Command(BaseCommand):
         # Get faculty
         cs_faculty = list(User.objects.filter(role='faculty', department='CS'))
         it_faculty = list(User.objects.filter(role='faculty', department='IT'))
-        ict_faculty = list(User.objects.filter(role='faculty', department='ICT'))
+        act_faculty = list(User.objects.filter(role='faculty', department='ACT'))
         
         faculty_map = {
             'CS': cs_faculty,
             'IT': it_faculty,
-            'ICT': ict_faculty
+            'ACT': act_faculty
         }
         
         # Create course assignments
@@ -122,7 +122,7 @@ class Command(BaseCommand):
         assignments_created = 0
         
         academic_year = "2024-2025"
-        departments = ['CS', 'IT', 'ICT']
+        departments = ['CS', 'IT', 'ACT']
         sections = ['A', 'B', 'C']
         semesters = ['1st', '2nd', 'Summer']
         

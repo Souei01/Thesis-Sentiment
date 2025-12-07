@@ -40,14 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <a href="/dashboard" className="text-sm font-medium text-white hover:text-gray-200">
                     Dashboard
                   </a>
-                  <a href="/feedback" className="text-sm text-gray-200 hover:text-white">
-                    Feedback
-                  </a>
-                  <a href="/tasks" className="text-sm text-gray-200 hover:text-white">
-                    Tasks
-                  </a>
-                  <a href="/settings" className="text-sm text-gray-200 hover:text-white">
-                    Settings
+                  <a href="/dashboard/responses" className="text-sm text-gray-200 hover:text-white">
+                    Responses
                   </a>
                 </div>
               )}

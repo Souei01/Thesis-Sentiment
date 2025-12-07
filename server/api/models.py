@@ -87,7 +87,7 @@ class CourseAssignment(models.Model):
     
     def save(self, *args, **kwargs):
         # Note: We allow course department to differ from assignment department
-        # because some courses are shared across departments (e.g., IT courses for ICT students)
+        # because some courses are shared across departments (e.g., IT courses for ACT students)
         
         is_new = self.pk is None
         super().save(*args, **kwargs)

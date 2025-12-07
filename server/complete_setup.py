@@ -27,7 +27,7 @@ print("=" * 70)
 print("\n📚 STEP 1: Creating Faculty Accounts...")
 print("-" * 70)
 
-departments = ['CS', 'IT', 'ICT']
+departments = ['CS', 'IT', 'ACT']
 faculty_per_dept = 10
 faculty_created = 0
 faculty_updated = 0

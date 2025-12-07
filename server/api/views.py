@@ -1285,7 +1285,7 @@ def get_courses_list(request):
         if user.admin_subrole == 'dept_head_cs':
             courses_qs = courses_qs.filter(department='CS')
         elif user.admin_subrole == 'dept_head_it':
-            courses_qs = courses_qs.filter(department__in=['IT', 'ICT'])
+            courses_qs = courses_qs.filter(department__in=['IT', 'ACT'])
         # dean has no restrictions
     
     # Apply filters
@@ -1315,4 +1315,120 @@ def get_courses_list(request):
     return Response({
         'success': True,
         'courses': courses_data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_response_stats(request):
+    """
+    Get feedback response statistics including respondents and non-respondents
+    """
+    from django.db.models import Count, Q
+    from collections import defaultdict
+    
+    user = request.user
+    semester = request.GET.get('semester')
+    academic_year = request.GET.get('academic_year')
+    instructor_id = request.GET.get('instructor_id')
+    course_id = request.GET.get('course_id')
+    department = request.GET.get('department')
+    
+    # Base queryset for enrollments
+    enrollments_qs = Enrollment.objects.select_related(
+        'student', 'assignment', 'assignment__course', 'assignment__instructor'
+    ).filter(assignment__is_active=True)
+    
+    # Apply filters
+    if semester and semester != 'all':
+        enrollments_qs = enrollments_qs.filter(assignment__semester=semester)
+    if academic_year and academic_year != 'all':
+        enrollments_qs = enrollments_qs.filter(assignment__academic_year=academic_year)
+    if instructor_id and instructor_id != 'all':
+        enrollments_qs = enrollments_qs.filter(assignment__instructor_id=instructor_id)
+    if course_id and course_id != 'all':
+        enrollments_qs = enrollments_qs.filter(assignment__course_id=course_id)
+    if department and department != 'all':
+        enrollments_qs = enrollments_qs.filter(assignment__department=department)
+    
+    # RBAC: Apply role-based restrictions
+    if user.role == 'faculty':
+        enrollments_qs = enrollments_qs.filter(assignment__instructor=user)
+    elif user.role == 'admin' and user.admin_subrole:
+        if user.admin_subrole == 'dept_head_cs':
+            enrollments_qs = enrollments_qs.filter(assignment__department='CS')
+        elif user.admin_subrole == 'dept_head_it':
+            enrollments_qs = enrollments_qs.filter(assignment__department__in=['IT', 'ACT'])
+    
+    # Get total students (enrolled)
+    total_students = enrollments_qs.count()
+    
+    # Get enrollments with feedback submissions
+    enrollments_with_feedback = enrollments_qs.filter(
+        feedback__isnull=False,
+        feedback__status='submitted'
+    ).distinct()
+    
+    # Get respondents details
+    respondents = []
+    for enrollment in enrollments_with_feedback:
+        feedback = enrollment.feedback.filter(status='submitted').first()
+        if feedback:
+            respondents.append({
+                'id': enrollment.student.id,
+                'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+                'email': enrollment.student.email,
+                'student_id': enrollment.student.student_id,
+                'course': f"{enrollment.assignment.course.code} - {enrollment.assignment.course.name}",
+                'section': enrollment.assignment.section,
+                'submitted_at': feedback.submitted_at.isoformat() if feedback.submitted_at else feedback.created_at.isoformat()
+            })
+    
+    # Get non-respondents
+    enrollments_without_feedback = enrollments_qs.exclude(
+        id__in=enrollments_with_feedback.values_list('id', flat=True)
+    )
+    
+    non_respondents = []
+    for enrollment in enrollments_without_feedback:
+        non_respondents.append({
+            'id': enrollment.student.id,
+            'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+            'email': enrollment.student.email,
+            'student_id': enrollment.student.student_id,
+            'course': f"{enrollment.assignment.course.code} - {enrollment.assignment.course.name}",
+            'section': enrollment.assignment.section
+        })
+    
+    # Calculate response rate
+    total_responses = len(respondents)
+    response_rate = (total_responses / total_students * 100) if total_students > 0 else 0
+    
+    # Get submissions over time (last 30 days)
+    from datetime import datetime, timedelta
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    
+    submissions_by_date = Feedback.objects.filter(
+        status='submitted',
+        created_at__gte=thirty_days_ago,
+        enrollment__in=enrollments_qs
+    ).extra(
+        select={'date': 'DATE(created_at)'}
+    ).values('date').annotate(count=Count('id')).order_by('date')
+    
+    submissions_over_time = [
+        {
+            'date': item['date'].isoformat() if hasattr(item['date'], 'isoformat') else str(item['date']),
+            'count': item['count']
+        }
+        for item in submissions_by_date
+    ]
+    
+    return Response({
+        'total_students': total_students,
+        'total_responses': total_responses,
+        'response_rate': response_rate,
+        'respondents': respondents,
+        'non_respondents': non_respondents,
+        'submissions_over_time': submissions_over_time
     }, status=status.HTTP_200_OK)

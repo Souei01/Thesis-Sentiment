@@ -191,8 +191,8 @@ class UserListView(APIView):
                     # CS Department Head: only CS faculty
                     users = users.filter(department='CS')
                 elif request.user.admin_subrole == 'dept_head_it':
-                    # IT Department Head: IT and ICT faculty
-                    users = users.filter(department__in=['IT', 'ICT'])
+                    # IT Department Head: IT and ACT faculty
+                    users = users.filter(department__in=['IT', 'ACT'])
                 # dean has no restrictions (sees all)
             
             # Serialize the users
