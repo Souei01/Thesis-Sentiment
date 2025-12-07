@@ -144,6 +144,11 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
     fetchResponseStats();
   }, [semester, academicYear, instructorId, courseId, department]);
 
+  // Reset to page 1 when search or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab]);
+
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
     setInstructorId('');
@@ -208,11 +213,6 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const paginatedData = filteredData.slice(startIndex, endIndex);
   
   const currentDataLength = currentData.length;
-  
-  // Reset to page 1 when search or tab changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, activeTab]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
