@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import axiosInstance from '@/lib/axios';
-import { Users, CheckCircle, XCircle, TrendingUp, Clock } from 'lucide-react';
+import { Users, CheckCircle, XCircle, TrendingUp, Clock, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ResponseStats {
   total_students: number;
@@ -59,6 +61,11 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [activeTab, setActiveTab] = useState<'respondents' | 'non-respondents'>('respondents');
+  
+  // Pagination and search states
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   useEffect(() => {
     if (userRole === 'admin') {
@@ -150,6 +157,34 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
       </div>
     );
   }
+
+  // Filter and paginate data
+  const currentData = activeTab === 'respondents' ? stats.respondents : stats.non_respondents;
+  
+  // Filter by search query
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) return currentData;
+    
+    const query = searchQuery.toLowerCase();
+    return currentData.filter(student => 
+      student.name.toLowerCase().includes(query) ||
+      student.email.toLowerCase().includes(query) ||
+      student.student_id.toLowerCase().includes(query) ||
+      student.course.toLowerCase().includes(query) ||
+      student.section.toLowerCase().includes(query)
+    );
+  }, [currentData, searchQuery, activeTab]);
+  
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+  
+  // Reset to page 1 when search or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab]);
 
   if (!stats) {
     return (
@@ -358,6 +393,40 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
           </div>
         </CardHeader>
         <CardContent>
+          {/* Search Bar and Items Per Page */}
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search by name, email, student ID, course, or section..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Show:</Label>
+              <Select value={itemsPerPage.toString()} onValueChange={(val) => setItemsPerPage(Number(val))}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Results Info */}
+          <div className="text-sm text-gray-600 mb-2">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} 
+            {searchQuery && ` (filtered from ${currentData.length} total)`}
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -371,49 +440,89 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
                 </tr>
               </thead>
               <tbody>
-                {activeTab === 'respondents' ? (
-                  stats.respondents.length > 0 ? (
-                    stats.respondents.map((student) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">{student.student_id}</td>
-                        <td className="py-3 px-4">{student.name}</td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{student.email}</td>
-                        <td className="py-3 px-4">{student.course}</td>
-                        <td className="py-3 px-4">{student.section}</td>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((student) => (
+                    <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">{student.student_id}</td>
+                      <td className="py-3 px-4">{student.name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{student.email}</td>
+                      <td className="py-3 px-4">{student.course}</td>
+                      <td className="py-3 px-4">{student.section}</td>
+                      {activeTab === 'respondents' && (
                         <td className="py-3 px-4 text-sm text-gray-600">
-                          {new Date(student.submitted_at).toLocaleString()}
+                          {new Date((student as any).submitted_at).toLocaleString()}
                         </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-500">
-                        No responses yet
-                      </td>
+                      )}
                     </tr>
-                  )
+                  ))
                 ) : (
-                  stats.non_respondents.length > 0 ? (
-                    stats.non_respondents.map((student) => (
-                      <tr key={student.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">{student.student_id}</td>
-                        <td className="py-3 px-4">{student.name}</td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{student.email}</td>
-                        <td className="py-3 px-4">{student.course}</td>
-                        <td className="py-3 px-4">{student.section}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-gray-500">
-                        All students have responded!
-                      </td>
-                    </tr>
-                  )
+                  <tr>
+                    <td colSpan={activeTab === 'respondents' ? 6 : 5} className="py-8 text-center text-gray-500">
+                      {searchQuery ? 'No results found for your search' : activeTab === 'respondents' ? 'No responses yet' : 'All students have responded!'}
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

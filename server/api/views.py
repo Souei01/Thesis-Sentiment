@@ -1363,42 +1363,53 @@ def get_response_stats(request):
     # Get total students (enrolled)
     total_students = enrollments_qs.count()
     
-    # Get respondents - students who submitted feedback
+    # Get all feedbacks for these enrollments in ONE query
+    enrollment_list = list(enrollments_qs.values_list('student_id', 'course_assignment_id'))
+    
+    # Build Q objects for all enrollment pairs
+    from django.db import models as django_models
+    feedback_queries = [
+        django_models.Q(student_id=student_id, course_assignment_id=assignment_id)
+        for student_id, assignment_id in enrollment_list
+    ]
+    
+    # Get all submitted feedbacks at once
+    feedbacks = {}
+    if feedback_queries:
+        feedback_qs = Feedback.objects.filter(
+            django_models.Q(*feedback_queries, _connector=django_models.Q.OR),
+            status='submitted'
+        ).select_related('student', 'course_assignment__course')
+        
+        # Create lookup dict: (student_id, assignment_id) -> feedback
+        for feedback in feedback_qs:
+            key = (feedback.student_id, feedback.course_assignment_id)
+            feedbacks[key] = feedback
+    
+    # Now iterate enrollments once to build respondents and non-respondents
     respondents = []
+    non_respondents = []
     respondent_ids = set()
     
     for enrollment in enrollments_qs:
-        # Check if there's feedback for this enrollment's course assignment and student
-        feedback = Feedback.objects.filter(
-            student=enrollment.student,
-            course_assignment=enrollment.course_assignment,
-            status='submitted'
-        ).first()
+        key = (enrollment.student.id, enrollment.course_assignment.id)
+        feedback = feedbacks.get(key)
+        
+        student_data = {
+            'id': enrollment.student.id,
+            'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+            'email': enrollment.student.email,
+            'student_id': enrollment.student.student_id,
+            'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
+            'section': enrollment.course_assignment.section
+        }
         
         if feedback:
             respondent_ids.add(enrollment.student.id)
-            respondents.append({
-                'id': enrollment.student.id,
-                'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
-                'email': enrollment.student.email,
-                'student_id': enrollment.student.student_id,
-                'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
-                'section': enrollment.course_assignment.section,
-                'submitted_at': feedback.submitted_at.isoformat() if feedback.submitted_at else feedback.created_at.isoformat()
-            })
-    
-    # Get non-respondents
-    non_respondents = []
-    for enrollment in enrollments_qs:
-        if enrollment.student.id not in respondent_ids:
-            non_respondents.append({
-                'id': enrollment.student.id,
-                'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
-                'email': enrollment.student.email,
-                'student_id': enrollment.student.student_id,
-                'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
-                'section': enrollment.course_assignment.section
-            })
+            student_data['submitted_at'] = feedback.submitted_at.isoformat() if feedback.submitted_at else feedback.created_at.isoformat()
+            respondents.append(student_data)
+        else:
+            non_respondents.append(student_data)
     
     # Calculate response rate
     total_responses = len(respondents)
