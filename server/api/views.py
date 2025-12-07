@@ -1433,7 +1433,3 @@ def get_response_stats(request):
         'non_respondents': non_respondents,
         'submissions_over_time': submissions_over_time
     }, status=status.HTTP_200_OK)
-        'respondents': respondents,
-        'non_respondents': non_respondents,
-        'submissions_over_time': submissions_over_time
-    }, status=status.HTTP_200_OK)
