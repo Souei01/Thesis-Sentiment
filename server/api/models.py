@@ -86,9 +86,8 @@ class CourseAssignment(models.Model):
         return f"{self.course.code} - {self.instructor.get_full_name()} - {section_str} ({self.semester} {self.academic_year})"
     
     def save(self, *args, **kwargs):
-        # Validate that course department matches assignment department
-        if self.course.department != self.department:
-            raise ValidationError(f"Course department ({self.course.department}) must match assignment department ({self.department})")
+        # Note: We allow course department to differ from assignment department
+        # because some courses are shared across departments (e.g., IT courses for ICT students)
         
         is_new = self.pk is None
         super().save(*args, **kwargs)
