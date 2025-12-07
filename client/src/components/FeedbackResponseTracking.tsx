@@ -159,10 +159,10 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   }
 
   // Filter and paginate data
-  const currentData = activeTab === 'respondents' ? stats.respondents : stats.non_respondents;
-  
   // Filter by search query
   const filteredData = useMemo(() => {
+    const currentData = activeTab === 'respondents' ? stats.respondents : stats.non_respondents;
+    
     if (!searchQuery.trim()) return currentData;
     
     const query = searchQuery.toLowerCase();
@@ -173,13 +173,15 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
       student.course.toLowerCase().includes(query) ||
       student.section.toLowerCase().includes(query)
     );
-  }, [currentData, searchQuery, activeTab]);
+  }, [stats, searchQuery, activeTab]);
   
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, endIndex);
+  
+  const currentDataLength = activeTab === 'respondents' ? stats.respondents.length : stats.non_respondents.length;
   
   // Reset to page 1 when search or tab changes
   useEffect(() => {
@@ -424,7 +426,7 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
           {/* Results Info */}
           <div className="text-sm text-gray-600 mb-2">
             Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} 
-            {searchQuery && ` (filtered from ${currentData.length} total)`}
+            {searchQuery && ` (filtered from ${currentDataLength} total)`}
           </div>
 
           <div className="overflow-x-auto">
