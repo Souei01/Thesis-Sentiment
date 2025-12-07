@@ -27,9 +27,9 @@ class Command(BaseCommand):
         CourseAssignment.objects.all().delete()
         Course.objects.filter(code__startswith=('CS', 'IT', 'CC', 'ICT')).delete()
         
-        # Read CSV and create courses
+        # Read CSV and create courses with semester info
         courses_created = 0
-        courses = {}
+        courses_with_semester = {}  # Store courses with their semester info
         
         with open(csv_path, 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
@@ -68,6 +68,16 @@ class Command(BaseCommand):
                 else:
                     continue
                 
+                # Parse semester
+                if '1st' in semester_str or 'First' in semester_str:
+                    semester = '1st'
+                elif '2nd' in semester_str or 'Second' in semester_str:
+                    semester = '2nd'
+                elif 'Summer' in semester_str:
+                    semester = 'Summer'
+                else:
+                    semester = '1st'  # Default to 1st semester
+                
                 # Create course
                 course, created = Course.objects.get_or_create(
                     code=code,
@@ -82,9 +92,11 @@ class Command(BaseCommand):
                 
                 if created:
                     courses_created += 1
-                    self.stdout.write(f'  ✓ {code}: {name}')
+                    self.stdout.write(f'  ✓ {code}: {name} ({semester} Semester)')
                 
-                courses[f'{department}_{year_level}_{code}'] = course
+                # Store course with semester info
+                key = f'{department}_{year_level}_{semester}_{code}'
+                courses_with_semester[key] = {'course': course, 'semester': semester}
         
         self.stdout.write(self.style.SUCCESS(f'✓ Created {courses_created} courses'))
         
@@ -104,76 +116,81 @@ class Command(BaseCommand):
         assignments_created = 0
         
         academic_year = "2024-2025"
-        semester = "1st"
         departments = ['CS', 'IT', 'ICT']
         sections = ['A', 'B', 'C']
+        semesters = ['1st', '2nd', 'Summer']
         
-        # Group courses by department and year level
-        courses_by_dept_year = {}
-        for course in Course.objects.all():
-            key = f'{course.department}_{course.year_level}'
-            if key not in courses_by_dept_year:
-                courses_by_dept_year[key] = []
-            courses_by_dept_year[key].append(course)
+        # Group courses by department, year level, and semester
+        courses_by_dept_year_sem = {}
+        for key, data in courses_with_semester.items():
+            dept, year_str, sem, code = key.split('_', 3)
+            year_level = int(year_str)
+            group_key = f'{dept}_{year_level}_{sem}'
+            
+            if group_key not in courses_by_dept_year_sem:
+                courses_by_dept_year_sem[group_key] = []
+            courses_by_dept_year_sem[group_key].append(data)
         
         # Assign courses to sections
         for dept in departments:
-            for year_level in [1, 2, 3, 4]:  # All year levels
-                section_faculty_map = {}  # Track professor per section
-                dept_year_courses = courses_by_dept_year.get(f'{dept}_{year_level}', [])
-                
-                if not dept_year_courses:
-                    self.stdout.write(self.style.WARNING(f'No courses found for {dept} Year {year_level}'))
-                    continue
-                
-                faculty_list = faculty_map.get(dept, [])
-                if not faculty_list:
-                    self.stdout.write(self.style.WARNING(f'No faculty found for {dept}'))
-                    continue
-                
-                for section_letter in sections:
-                    section_name = f'{year_level}{section_letter}'
+            for year_level in [1, 2, 3, 4]:
+                for semester in semesters:
+                    group_key = f'{dept}_{year_level}_{semester}'
+                    courses_list = courses_by_dept_year_sem.get(group_key, [])
                     
-                    # Assign one professor per section (same professor for all courses in that section)
-                    section_idx = sections.index(section_letter)
-                    professor = faculty_list[section_idx % len(faculty_list)]
+                    if not courses_list:
+                        continue
                     
-                    # Assign all courses to this section with the same professor
-                    for course in dept_year_courses:
-                        assignment, created = CourseAssignment.objects.get_or_create(
-                            course=course,
-                            instructor=professor,
-                            year_level=year_level,
-                            section=section_name,
-                            department=dept,
-                            semester=semester,
-                            academic_year=academic_year,
-                            defaults={'is_active': True}
-                        )
+                    faculty_list = faculty_map.get(dept, [])
+                    if not faculty_list:
+                        self.stdout.write(self.style.WARNING(f'No faculty found for {dept}'))
+                        continue
+                    
+                    for section_letter in sections:
+                        section_name = f'{year_level}{section_letter}'
                         
-                        if created:
-                            assignments_created += 1
-                            if assignments_created % 10 == 0:
-                                self.stdout.write(f'  ... {assignments_created} assignments created')
+                        # Assign one professor per section
+                        section_idx = sections.index(section_letter)
+                        professor = faculty_list[section_idx % len(faculty_list)]
+                        
+                        # Assign all courses to this section
+                        for course_data in courses_list:
+                            course = course_data['course']
+                            assignment, created = CourseAssignment.objects.get_or_create(
+                                course=course,
+                                instructor=professor,
+                                year_level=year_level,
+                                section=section_name,
+                                department=dept,
+                                semester=semester,
+                                academic_year=academic_year,
+                                defaults={'is_active': True}
+                            )
+                            
+                            if created:
+                                assignments_created += 1
+                                if assignments_created % 10 == 0:
+                                    self.stdout.write(f'  ... {assignments_created} assignments created')
         
         self.stdout.write(self.style.SUCCESS(f'✓ Created {assignments_created} course assignments'))
         
-        # Create feedback session
-        self.stdout.write(self.style.SUCCESS('\n📝 Creating Feedback Session...'))
-        session, created = FeedbackSession.objects.get_or_create(
-            academic_year=academic_year,
-            semester=semester,
-            defaults={
-                'title': f'{semester} Semester {academic_year} Faculty Evaluation',
-                'start_date': timezone.now(),
-                'end_date': timezone.now() + timedelta(days=14),
-                'is_active': True,
-                'instructions': 'Please provide honest feedback about your courses and instructors.'
-            }
-        )
-        
-        if created:
-            self.stdout.write(self.style.SUCCESS('✓ Created feedback session'))
+        # Create feedback sessions for all semesters
+        self.stdout.write(self.style.SUCCESS('\n📝 Creating Feedback Sessions...'))
+        for semester in semesters:
+            session, created = FeedbackSession.objects.get_or_create(
+                academic_year=academic_year,
+                semester=semester,
+                defaults={
+                    'title': f'{semester} Semester {academic_year} Faculty Evaluation',
+                    'start_date': timezone.now(),
+                    'end_date': timezone.now() + timedelta(days=14),
+                    'is_active': True if semester == '1st' else False,  # Only 1st semester active by default
+                    'instructions': 'Please provide honest feedback about your courses and instructors.'
+                }
+            )
+            
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'✓ Created feedback session for {semester} semester'))
         
         # Summary
         self.stdout.write('\n' + '='*70)

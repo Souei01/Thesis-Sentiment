@@ -41,9 +41,11 @@ class LoginSerializer(serializers.Serializer):
         password = data.get('password')
         
         if email and password:
-            # Check if user exists
+            # Check if user exists (case-insensitive lookup)
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(email__iexact=email)
+                # Update email to match the actual case in database
+                email = user.email
             except User.DoesNotExist:
                 raise serializers.ValidationError("Invalid email or password")
             

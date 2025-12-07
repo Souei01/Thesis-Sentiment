@@ -48,9 +48,12 @@ export default function StudentDashboard({ courses, onSubmitFeedback, onRateCour
     ? courses
     : courses.filter((course) => {
         // Debug: Log semester values
-        console.log(`Course: ${course.name}, Semester: "${course.semester}", Selected: "${selectedSemester}"`);
+        console.log(`Course: ${course.name}, Semester: "${course.semester}", Selected: "${selectedSemester}", Match: ${course.semester === selectedSemester}`);
         return course.semester === selectedSemester;
       });
+
+  // Log total courses and filtered count
+  console.log(`Total courses: ${courses.length}, Filtered: ${filteredCourses.length}, Selected semester: "${selectedSemester}"`);
 
   return (
     <>
