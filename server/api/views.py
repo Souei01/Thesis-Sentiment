@@ -1336,29 +1336,29 @@ def get_response_stats(request):
     
     # Base queryset for enrollments
     enrollments_qs = Enrollment.objects.select_related(
-        'student', 'assignment', 'assignment__course', 'assignment__instructor'
-    ).filter(assignment__is_active=True)
+        'student', 'course_assignment', 'course_assignment__course', 'course_assignment__instructor'
+    ).filter(course_assignment__is_active=True)
     
     # Apply filters
     if semester and semester != 'all':
-        enrollments_qs = enrollments_qs.filter(assignment__semester=semester)
+        enrollments_qs = enrollments_qs.filter(course_assignment__semester=semester)
     if academic_year and academic_year != 'all':
-        enrollments_qs = enrollments_qs.filter(assignment__academic_year=academic_year)
+        enrollments_qs = enrollments_qs.filter(course_assignment__academic_year=academic_year)
     if instructor_id and instructor_id != 'all':
-        enrollments_qs = enrollments_qs.filter(assignment__instructor_id=instructor_id)
+        enrollments_qs = enrollments_qs.filter(course_assignment__instructor_id=instructor_id)
     if course_id and course_id != 'all':
-        enrollments_qs = enrollments_qs.filter(assignment__course_id=course_id)
+        enrollments_qs = enrollments_qs.filter(course_assignment__course_id=course_id)
     if department and department != 'all':
-        enrollments_qs = enrollments_qs.filter(assignment__department=department)
+        enrollments_qs = enrollments_qs.filter(course_assignment__department=department)
     
     # RBAC: Apply role-based restrictions
     if user.role == 'faculty':
-        enrollments_qs = enrollments_qs.filter(assignment__instructor=user)
+        enrollments_qs = enrollments_qs.filter(course_assignment__instructor=user)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
-            enrollments_qs = enrollments_qs.filter(assignment__department='CS')
+            enrollments_qs = enrollments_qs.filter(course_assignment__department='CS')
         elif user.admin_subrole == 'dept_head_it':
-            enrollments_qs = enrollments_qs.filter(assignment__department__in=['IT', 'ACT'])
+            enrollments_qs = enrollments_qs.filter(course_assignment__department__in=['IT', 'ACT'])
     
     # Get total students (enrolled)
     total_students = enrollments_qs.count()
