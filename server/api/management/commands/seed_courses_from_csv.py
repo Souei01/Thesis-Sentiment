@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 else:
                     semester = '1st'  # Default to 1st semester
                 
-                # Create course
+                # Create course with semester
                 course, created = Course.objects.get_or_create(
                     code=code,
                     defaults={
@@ -86,9 +86,15 @@ class Command(BaseCommand):
                         'description': description,
                         'department': department,
                         'year_level': year_level,
+                        'semester': semester,
                         'units': 3
                     }
                 )
+                
+                # Update semester if course already exists
+                if not created and course.semester != semester:
+                    course.semester = semester
+                    course.save()
                 
                 if created:
                     courses_created += 1
