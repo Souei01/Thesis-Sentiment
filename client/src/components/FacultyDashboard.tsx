@@ -93,6 +93,12 @@ interface Instructor {
   last_name: string;
 }
 
+interface Course {
+  id: number;
+  code: string;
+  name: string;
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export default function FacultyDashboard({ userRole }: { userRole: string }) {
@@ -102,14 +108,17 @@ export default function FacultyDashboard({ userRole }: { userRole: string }) {
   const [semester, setSemester] = useState<string>('');
   const [academicYear, setAcademicYear] = useState<string>('');
   const [instructorId, setInstructorId] = useState<string>('');
+  const [courseId, setCourseId] = useState<string>('');
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
 
-  // Fetch instructors if admin
+  // Fetch instructors if admin and courses
   useEffect(() => {
     if (userRole === 'admin') {
       fetchInstructors();
     }
-  }, [userRole]);
+    fetchCourses();
+  }, [userRole, instructorId]);
 
   const fetchInstructors = async () => {
     try {
@@ -120,10 +129,23 @@ export default function FacultyDashboard({ userRole }: { userRole: string }) {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
+      setCourses(response.data.courses || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      setCourses([]);
+    }
+  };
+
   // Fetch analytics data
   useEffect(() => {
     fetchAnalytics();
-  }, [semester, academicYear, instructorId]);
+  }, [semester, academicYear, instructorId, courseId]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -133,6 +155,7 @@ export default function FacultyDashboard({ userRole }: { userRole: string }) {
       if (semester && semester !== 'all') params.append('semester', semester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
       console.log('Fetching analytics with URL:', `/feedback/analytics/?${params.toString()}`);
       const response = await axiosInstance.get(`/feedback/analytics/?${params.toString()}`);
@@ -306,6 +329,24 @@ export default function FacultyDashboard({ userRole }: { userRole: string }) {
                 </Select>
               </div>
             )}
+
+            {/* Course Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="course">Course/Subject</Label>
+              <Select value={courseId} onValueChange={setCourseId}>
+                <SelectTrigger id="course">
+                  <SelectValue placeholder="All Courses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Courses</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id.toString()}>
+                      {course.code} - {course.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

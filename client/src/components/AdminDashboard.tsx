@@ -73,6 +73,15 @@ interface Instructor {
   first_name: string;
   last_name: string;
   email: string;
+  display_name?: string;
+}
+
+interface Course {
+  id: number;
+  code: string;
+  name: string;
+  department: string;
+  year_level: number;
 }
 
 interface EmotionAnalytics {
@@ -103,7 +112,9 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const [academicYear, setAcademicYear] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [instructorId, setInstructorId] = useState('all');
+  const [courseId, setCourseId] = useState('all');
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [emotionData, setEmotionData] = useState<EmotionAnalytics | null>(null);
@@ -112,13 +123,14 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const [topicLoading, setTopicLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  // Fetch instructors and academic years if admin
+  // Fetch instructors, courses and academic years if admin or faculty
   useEffect(() => {
     if (userRole === 'admin') {
       fetchInstructors();
       fetchAvailableYears();
     }
-  }, [userRole]);
+    fetchCourses();
+  }, [userRole, selectedDepartment, instructorId]);
 
   const fetchInstructors = async () => {
     try {
@@ -126,6 +138,20 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       setInstructors(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching instructors:', error);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
+      setCourses(response.data.courses || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      setCourses([]);
     }
   };
 
@@ -146,7 +172,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   // Fetch analytics data
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedSemester, academicYear, instructorId, selectedDepartment]);
+  }, [selectedSemester, academicYear, instructorId, selectedDepartment, courseId]);
 
   // Fetch emotion and topic data when switching tabs
   useEffect(() => {
@@ -155,7 +181,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     } else if (activeTab === 'topics') {
       fetchTopicData();
     }
-  }, [activeTab, selectedSemester, academicYear, instructorId, selectedDepartment]);
+  }, [activeTab, selectedSemester, academicYear, instructorId, selectedDepartment, courseId]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -166,6 +192,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
       const response = await axiosInstance.get(`/feedback/analytics/?${params.toString()}`);
       setAnalytics(response.data);
@@ -185,8 +212,9 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
-      const response = await axiosInstance.get(`/emotions/analytics/?${params.toString()}`);
+      const response = await axiosInstance.get(`/emotions/analytics/?${params.toString()}`);\n      setEmotionData(response.data);
       setEmotionData(response.data);
     } catch (error: any) {
       console.error('Error fetching emotion analytics:', error);
@@ -215,6 +243,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
       const response = await axiosInstance.get(`/feedback/export-pdf/?${params.toString()}`, {
         responseType: 'blob',
@@ -251,6 +280,20 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     } finally {
       setExporting(false);
     }
+  };
+
+  // Cascading filter handlers
+  const handleDepartmentChange = (value: string) => {
+    setSelectedDepartment(value);
+    // Reset dependent filters
+    setInstructorId('all');
+    setCourseId('all');
+  };
+
+  const handleInstructorChange = (value: string) => {
+    setInstructorId(value);
+    // Reset course filter
+    setCourseId('all');
   };
 
   if (loading) {
@@ -474,7 +517,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                    <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
                       <SelectTrigger id="department">
                         <SelectValue placeholder="All Departments" />
                       </SelectTrigger>
@@ -489,7 +532,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                   
                   <div className="space-y-2">
                     <Label htmlFor="instructor">Instructor</Label>
-                    <Select value={instructorId} onValueChange={setInstructorId}>
+                    <Select value={instructorId} onValueChange={handleInstructorChange}>
                       <SelectTrigger id="instructor">
                         <SelectValue placeholder="All Instructors" />
                       </SelectTrigger>
@@ -497,7 +540,24 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                         <SelectItem value="all">All Instructors</SelectItem>
                         {instructors.map((instructor) => (
                           <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                            {instructor.first_name} {instructor.last_name}
+                            {instructor.display_name || `${instructor.first_name} ${instructor.last_name}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="course">Course/Subject</Label>
+                    <Select value={courseId} onValueChange={setCourseId}>
+                      <SelectTrigger id="course">
+                        <SelectValue placeholder="All Courses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Courses</SelectItem>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={course.id.toString()}>
+                            {course.code} - {course.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

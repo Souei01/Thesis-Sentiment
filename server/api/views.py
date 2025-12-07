@@ -1257,3 +1257,62 @@ def export_feedback_pdf(request):
             {'error': f'Failed to generate PDF report: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_courses_list(request):
+    """Get list of courses filtered by department and/or instructor (for cascading dropdowns)"""
+    user = request.user
+    
+    if user.role not in ['faculty', 'admin']:
+        return Response(
+            {'error': 'Only faculty and admin can access this endpoint'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Get filter parameters
+    department = request.GET.get('department')
+    instructor_id = request.GET.get('instructor_id')
+    
+    # Base queryset - get courses that have assignments
+    courses_qs = Course.objects.filter(
+        assignments__is_active=True
+    ).distinct()
+    
+    # RBAC: Department head restrictions
+    if user.role == 'admin' and user.admin_subrole:
+        if user.admin_subrole == 'dept_head_cs':
+            courses_qs = courses_qs.filter(department='CS')
+        elif user.admin_subrole == 'dept_head_it':
+            courses_qs = courses_qs.filter(department__in=['IT', 'ICT'])
+        # dean has no restrictions
+    
+    # Apply filters
+    if department and department != 'all':
+        courses_qs = courses_qs.filter(department=department)
+    
+    if instructor_id and instructor_id != 'all':
+        courses_qs = courses_qs.filter(assignments__instructor_id=instructor_id)
+    elif user.role == 'faculty':
+        # Faculty can only see their own courses
+        courses_qs = courses_qs.filter(assignments__instructor=user)
+    
+    # Order by department, year level, and code
+    courses_qs = courses_qs.order_by('department', 'year_level', 'code')
+    
+    # Serialize courses
+    courses_data = []
+    for course in courses_qs:
+        courses_data.append({
+            'id': course.id,
+            'code': course.code,
+            'name': course.name,
+            'department': course.department,
+            'year_level': course.year_level,
+        })
+    
+    return Response({
+        'success': True,
+        'courses': courses_data
+    }, status=status.HTTP_200_OK)

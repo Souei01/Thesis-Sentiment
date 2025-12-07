@@ -10,6 +10,7 @@ from .views import (
     trigger_topic_modeling,
     get_available_years,
     export_feedback_pdf,
+    get_courses_list,
 )
 
 urlpatterns = [
@@ -19,6 +20,7 @@ urlpatterns = [
     path('faculty/courses/', get_faculty_courses, name='faculty_courses'),
     path('feedback/analytics/', get_feedback_analytics, name='feedback_analytics'),
     path('feedback/available-years/', get_available_years, name='available_years'),
+    path('feedback/courses/', get_courses_list, name='courses_list'),
     path('feedback/export-pdf/', export_feedback_pdf, name='export_feedback_pdf'),
     path('emotions/analytics/', get_emotion_analytics, name='emotion_analytics'),
     path('topics/', get_topic_modeling_data, name='topic_modeling'),

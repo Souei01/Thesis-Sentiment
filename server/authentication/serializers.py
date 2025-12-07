@@ -4,10 +4,16 @@ from .models import User
 import re
 
 class UserSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'role', 'admin_subrole', 'student_id', 'department', 'is_active', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'email', 'username', 'role', 'admin_subrole', 'student_id', 'department', 'is_active', 'created_at', 'display_name']
+        read_only_fields = ['id', 'created_at', 'display_name']
+    
+    def get_display_name(self, obj):
+        """Get the display name for the user"""
+        return obj.get_display_name()
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
