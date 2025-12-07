@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -67,85 +67,82 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
-  const fetchInstructors = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({ role: 'faculty' });
-      if (department && department !== 'all') params.append('department', department);
-      
-      const response = await axiosInstance.get(`/auth/users/?${params.toString()}`);
-      setInstructors(response.data.data || response.data);
-    } catch (error) {
-      console.error('Error fetching instructors:', error);
-    }
-  }, [department]);
-
-  const fetchCourses = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
-      if (department && department !== 'all') params.append('department', department);
-      
-      const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
-      setCourses(response.data.courses || []);
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-      setCourses([]);
-    }
-  }, [instructorId, department]);
-
-  const fetchResponseStats = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (semester && semester !== 'all') params.append('semester', semester);
-      if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
-      if (courseId && courseId !== 'all') params.append('course_id', courseId);
-      if (department && department !== 'all') params.append('department', department);
-
-      const response = await axiosInstance.get(`/feedback/response-stats/?${params.toString()}`);
-      
-      // Ensure arrays exist even if empty
-      const data = response.data;
-      setStats({
-        total_students: data.total_students || 0,
-        total_responses: data.total_responses || 0,
-        response_rate: data.response_rate || 0,
-        respondents: data.respondents || [],
-        non_respondents: data.non_respondents || [],
-        submissions_over_time: data.submissions_over_time || []
-      });
-    } catch (error: any) {
-      console.error('Error fetching response stats:', error);
-      setError(error.response?.data?.error || error.message || 'Failed to load response statistics');
-      // Set empty stats on error
-      setStats({
-        total_students: 0,
-        total_responses: 0,
-        response_rate: 0,
-        respondents: [],
-        non_respondents: [],
-        submissions_over_time: []
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [semester, academicYear, instructorId, courseId, department]);
-
   useEffect(() => {
     if (userRole === 'admin') {
+      const fetchInstructors = async () => {
+        try {
+          const params = new URLSearchParams({ role: 'faculty' });
+          if (department && department !== 'all') params.append('department', department);
+          
+          const response = await axiosInstance.get(`/auth/users/?${params.toString()}`);
+          setInstructors(response.data.data || response.data);
+        } catch (error) {
+          console.error('Error fetching instructors:', error);
+        }
+      };
       fetchInstructors();
     }
-  }, [userRole, fetchInstructors]);
+  }, [userRole, department]);
 
   useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+        if (department && department !== 'all') params.append('department', department);
+        
+        const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
+        setCourses(response.data.courses || []);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setCourses([]);
+      }
+    };
     fetchCourses();
-  }, [fetchCourses]);
+  }, [instructorId, department]);
 
   useEffect(() => {
+    const fetchResponseStats = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (semester && semester !== 'all') params.append('semester', semester);
+        if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
+        if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+        if (courseId && courseId !== 'all') params.append('course_id', courseId);
+        if (department && department !== 'all') params.append('department', department);
+
+        const response = await axiosInstance.get(`/feedback/response-stats/?${params.toString()}`);
+        
+        // Ensure arrays exist even if empty
+        const data = response.data;
+        setStats({
+          total_students: data.total_students || 0,
+          total_responses: data.total_responses || 0,
+          response_rate: data.response_rate || 0,
+          respondents: data.respondents || [],
+          non_respondents: data.non_respondents || [],
+          submissions_over_time: data.submissions_over_time || []
+        });
+      } catch (error: any) {
+        console.error('Error fetching response stats:', error);
+        setError(error.response?.data?.error || error.message || 'Failed to load response statistics');
+        // Set empty stats on error
+        setStats({
+          total_students: 0,
+          total_responses: 0,
+          response_rate: 0,
+          respondents: [],
+          non_respondents: [],
+          submissions_over_time: []
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchResponseStats();
-  }, [fetchResponseStats]);
+  }, [semester, academicYear, instructorId, courseId, department]);
 
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
