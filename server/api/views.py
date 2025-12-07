@@ -140,7 +140,10 @@ def get_student_enrollments(request):
                 ).exists()
             
             # Map semester to display format
-            semester_display = f"{assignment.semester} Semester"
+            if assignment.semester == 'Summer':
+                semester_display = 'Summer'
+            else:
+                semester_display = f"{assignment.semester} Semester"
             
             # Assign color based on course code prefix
             color = 'blue'
@@ -159,7 +162,7 @@ def get_student_enrollments(request):
                 'name': course.name,
                 'description': course.description,
                 'semester': semester_display,
-                'instructor': assignment.instructor.get_full_name(),
+                'instructor': assignment.instructor.get_display_name(),
                 'instructor_id': assignment.instructor.id,
                 'section': assignment.section,
                 'schedule': assignment.schedule,
@@ -247,13 +250,55 @@ def submit_feedback(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Extract text feedback for emotion analysis
+    # Helper function to sanitize and validate text input
+    def sanitize_text_input(text, max_length=2000):
+        """Sanitize text input to prevent injection attacks and enforce length limits"""
+        if not text:
+            return ''
+        
+        # Strip whitespace
+        text = text.strip()
+        
+        # Enforce maximum length
+        if len(text) > max_length:
+            text = text[:max_length]
+        
+        # HTML escape to prevent XSS
+        from html import escape
+        text = escape(text)
+        
+        return text
+    
+    # Extract and sanitize text feedback for emotion analysis
     text_feedback = {
-        'suggested_changes': feedback_data.get('comments', {}).get('recommendedChanges', ''),
-        'best_teaching_aspect': feedback_data.get('comments', {}).get('likeBest', ''),
-        'least_teaching_aspect': feedback_data.get('comments', {}).get('likeLeast', ''),
-        'further_comments': feedback_data.get('comments', {}).get('additionalComments', ''),
+        'suggested_changes': sanitize_text_input(
+            feedback_data.get('comments', {}).get('recommendedChanges', ''), 
+            max_length=1000
+        ),
+        'best_teaching_aspect': sanitize_text_input(
+            feedback_data.get('comments', {}).get('likeBest', ''), 
+            max_length=1000
+        ),
+        'least_teaching_aspect': sanitize_text_input(
+            feedback_data.get('comments', {}).get('likeLeast', ''), 
+            max_length=1000
+        ),
+        'further_comments': sanitize_text_input(
+            feedback_data.get('comments', {}).get('additionalComments', ''), 
+            max_length=2000
+        ),
     }
+    
+    # Validate rating values to ensure they're within acceptable range (1-5)
+    def validate_rating(value, default=3):
+        """Validate rating is an integer between 1-5"""
+        try:
+            rating = int(value)
+            if 1 <= rating <= 5:
+                return rating
+        except (TypeError, ValueError):
+            pass
+        return default
     
     # Predict emotions for all text fields (batch prediction for efficiency)
     logger.info("Predicting emotions for feedback text...")
@@ -284,33 +329,33 @@ def submit_feedback(request):
         course_assignment=assignment,
         feedback_session=active_session,
         # Part 1: Commitment
-        rating_sensitivity=feedback_data.get('commitment', {}).get('sensitivity', 3),
-        rating_integration=feedback_data.get('commitment', {}).get('integration', 3),
-        rating_availability=feedback_data.get('commitment', {}).get('availability', 3),
-        rating_punctuality=feedback_data.get('commitment', {}).get('punctuality', 3),
-        rating_record_keeping=feedback_data.get('commitment', {}).get('recordKeeping', 3),
+        rating_sensitivity=validate_rating(feedback_data.get('commitment', {}).get('sensitivity', 3)),
+        rating_integration=validate_rating(feedback_data.get('commitment', {}).get('integration', 3)),
+        rating_availability=validate_rating(feedback_data.get('commitment', {}).get('availability', 3)),
+        rating_punctuality=validate_rating(feedback_data.get('commitment', {}).get('punctuality', 3)),
+        rating_record_keeping=validate_rating(feedback_data.get('commitment', {}).get('recordKeeping', 3)),
         # Part 2: Knowledge of Subject
-        rating_mastery=feedback_data.get('knowledgeOfSubject', {}).get('mastery', 3),
-        rating_state_of_art=feedback_data.get('knowledgeOfSubject', {}).get('stateOfArt', 3),
-        rating_practical_integration=feedback_data.get('knowledgeOfSubject', {}).get('practicalIntegration', 3),
-        rating_relevance=feedback_data.get('knowledgeOfSubject', {}).get('relevance', 3),
-        rating_current_trends=feedback_data.get('knowledgeOfSubject', {}).get('currentTrends', 3),
+        rating_mastery=validate_rating(feedback_data.get('knowledgeOfSubject', {}).get('mastery', 3)),
+        rating_state_of_art=validate_rating(feedback_data.get('knowledgeOfSubject', {}).get('stateOfArt', 3)),
+        rating_practical_integration=validate_rating(feedback_data.get('knowledgeOfSubject', {}).get('practicalIntegration', 3)),
+        rating_relevance=validate_rating(feedback_data.get('knowledgeOfSubject', {}).get('relevance', 3)),
+        rating_current_trends=validate_rating(feedback_data.get('knowledgeOfSubject', {}).get('currentTrends', 3)),
         # Part 3: Independent Learning
-        rating_teaching_strategies=feedback_data.get('independentLearning', {}).get('teachingStrategies', 3),
-        rating_student_esteem=feedback_data.get('independentLearning', {}).get('studentEsteem', 3),
-        rating_student_autonomy=feedback_data.get('independentLearning', {}).get('studentAutonomy', 3),
-        rating_independent_thinking=feedback_data.get('independentLearning', {}).get('independentThinking', 3),
-        rating_beyond_required=feedback_data.get('independentLearning', {}).get('beyondRequired', 3),
+        rating_teaching_strategies=validate_rating(feedback_data.get('independentLearning', {}).get('teachingStrategies', 3)),
+        rating_student_esteem=validate_rating(feedback_data.get('independentLearning', {}).get('studentEsteem', 3)),
+        rating_student_autonomy=validate_rating(feedback_data.get('independentLearning', {}).get('studentAutonomy', 3)),
+        rating_independent_thinking=validate_rating(feedback_data.get('independentLearning', {}).get('independentThinking', 3)),
+        rating_beyond_required=validate_rating(feedback_data.get('independentLearning', {}).get('beyondRequired', 3)),
         # Part 4: Management of Learning
-        rating_student_contribution=feedback_data.get('managementOfLearning', {}).get('studentContribution', 3),
-        rating_facilitator_role=feedback_data.get('managementOfLearning', {}).get('facilitatorRole', 3),
-        rating_discussion_encouragement=feedback_data.get('managementOfLearning', {}).get('discussionEncouragement', 3),
-        rating_instructional_methods=feedback_data.get('managementOfLearning', {}).get('instructionalMethods', 3),
-        rating_instructional_materials=feedback_data.get('managementOfLearning', {}).get('instructionalMaterials', 3),
+        rating_student_contribution=validate_rating(feedback_data.get('managementOfLearning', {}).get('studentContribution', 3)),
+        rating_facilitator_role=validate_rating(feedback_data.get('managementOfLearning', {}).get('facilitatorRole', 3)),
+        rating_discussion_encouragement=validate_rating(feedback_data.get('managementOfLearning', {}).get('discussionEncouragement', 3)),
+        rating_instructional_methods=validate_rating(feedback_data.get('managementOfLearning', {}).get('instructionalMethods', 3)),
+        rating_instructional_materials=validate_rating(feedback_data.get('managementOfLearning', {}).get('instructionalMaterials', 3)),
         # Part 5: Feedback and Assessment
-        rating_clear_communication=feedback_data.get('feedbackAssessment', {}).get('clearCommunication', 3),
-        rating_timely_feedback=feedback_data.get('feedbackAssessment', {}).get('timelyFeedback', 3),
-        rating_improvement_feedback=feedback_data.get('feedbackAssessment', {}).get('improvementFeedback', 3),
+        rating_clear_communication=validate_rating(feedback_data.get('feedbackAssessment', {}).get('clearCommunication', 3)),
+        rating_timely_feedback=validate_rating(feedback_data.get('feedbackAssessment', {}).get('timelyFeedback', 3)),
+        rating_improvement_feedback=validate_rating(feedback_data.get('feedbackAssessment', {}).get('improvementFeedback', 3)),
         # Part 6: Other Questions
         syllabus_explained=feedback_data.get('otherQuestions', {}).get('syllabusExplained'),
         delivered_as_outlined=feedback_data.get('otherQuestions', {}).get('deliveredAsOutlined'),
@@ -321,11 +366,11 @@ def submit_feedback(request):
         # Part 7: Overall Experience
         worthwhile_class=feedback_data.get('overallExperience', {}).get('worthwhileClass'),
         would_recommend=feedback_data.get('overallExperience', {}).get('wouldRecommend'),
-        hours_per_week=feedback_data.get('overallExperience', {}).get('hoursPerWeek', 0),
-        overall_rating=feedback_data.get('overallExperience', {}).get('overallRating', 3),
+        hours_per_week=validate_rating(feedback_data.get('overallExperience', {}).get('hoursPerWeek', 0)),
+        overall_rating=validate_rating(feedback_data.get('overallExperience', {}).get('overallRating', 3)),
         # Part 8: Student Self-Evaluation
-        rating_constructive_contribution=feedback_data.get('studentEvaluation', {}).get('constructiveContribution', 3),
-        rating_achieving_outcomes=feedback_data.get('studentEvaluation', {}).get('achievingOutcomes', 3),
+        rating_constructive_contribution=validate_rating(feedback_data.get('studentEvaluation', {}).get('constructiveContribution', 3)),
+        rating_achieving_outcomes=validate_rating(feedback_data.get('studentEvaluation', {}).get('achievingOutcomes', 3)),
         # Part 9: Comments (Text feedback)
         suggested_changes=text_feedback['suggested_changes'],
         best_teaching_aspect=text_feedback['best_teaching_aspect'],
@@ -365,8 +410,10 @@ def submit_feedback(request):
         total_feedbacks = Feedback.objects.filter(status='submitted').count()
         
         # Check if we should run topic modeling
-        # Run if: multiple of 5 feedbacks AND at least 10 total feedbacks
-        if total_feedbacks >= 10 and total_feedbacks % 5 == 0:
+        # Run if: at 10 feedbacks OR multiple of 5 feedbacks after 10
+        should_run = (total_feedbacks == 10) or (total_feedbacks > 10 and total_feedbacks % 5 == 0)
+        
+        if should_run:
             logger.info(f"Triggering topic modeling task ({total_feedbacks} feedbacks)...")
             
             # Run asynchronously in background
@@ -469,12 +516,23 @@ def get_feedback_analytics(request):
     academic_year = request.GET.get('academic_year')  # e.g., '2024-2025'
     instructor_id = request.GET.get('instructor_id')  # faculty ID
     course_id = request.GET.get('course_id')  # specific course
+    department = request.GET.get('department')  # e.g., 'CS', 'IT', 'ICT'
     
     # Base queryset
     feedback_qs = Feedback.objects.filter(status='submitted')
     
-    # RBAC: Department head restrictions
-    if user.role == 'admin' and user.admin_subrole:
+    # Apply department filter for dean (overrides RBAC)
+    if department and user.role == 'admin' and user.admin_subrole == 'dean':
+        if department == 'CS':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
+        elif department == 'IT':
+            feedback_qs = feedback_qs.filter(
+                Q(course_assignment__course__code__startswith='IT') |
+                Q(course_assignment__course__code__startswith='ICT') |
+                Q(course_assignment__course__code__startswith='ACT')
+            )
+    # RBAC: Department head restrictions (only if no department filter)
+    elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
@@ -684,12 +742,23 @@ def get_emotion_analytics(request):
     academic_year = request.GET.get('academic_year')
     instructor_id = request.GET.get('instructor_id')
     course_id = request.GET.get('course_id')
+    department = request.GET.get('department')
     
     # Base queryset
     feedback_qs = Feedback.objects.filter(status='submitted')
     
-    # RBAC: Department head restrictions
-    if user.role == 'admin' and user.admin_subrole:
+    # Apply department filter for dean (overrides RBAC)
+    if department and user.role == 'admin' and user.admin_subrole == 'dean':
+        if department == 'CS':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
+        elif department == 'IT':
+            feedback_qs = feedback_qs.filter(
+                Q(course_assignment__course__code__startswith='IT') |
+                Q(course_assignment__course__code__startswith='ICT') |
+                Q(course_assignment__course__code__startswith='ACT')
+            )
+    # RBAC: Department head restrictions (only if no department filter)
+    elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
@@ -1112,12 +1181,23 @@ def export_feedback_pdf(request):
     academic_year = request.GET.get('academic_year')
     instructor_id = request.GET.get('instructor_id')
     course_id = request.GET.get('course_id')
+    department = request.GET.get('department')
     
     # Base queryset
     feedback_qs = Feedback.objects.filter(status='submitted')
     
-    # RBAC: Department head restrictions
-    if user.role == 'admin' and user.admin_subrole:
+    # Apply department filter for dean (overrides RBAC)
+    if department and user.role == 'admin' and user.admin_subrole == 'dean':
+        if department == 'CS':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
+        elif department == 'IT':
+            feedback_qs = feedback_qs.filter(
+                Q(course_assignment__course__code__startswith='IT') |
+                Q(course_assignment__course__code__startswith='ICT') |
+                Q(course_assignment__course__code__startswith='ACT')
+            )
+    # RBAC: Department head restrictions (only if no department filter)
+    elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
         elif user.admin_subrole == 'dept_head_it':
@@ -1148,7 +1228,7 @@ def export_feedback_pdf(request):
     if instructor_id:
         try:
             instructor = User.objects.get(id=instructor_id)
-            filters['instructor_name'] = f"{instructor.first_name} {instructor.last_name}"
+            filters['instructor_name'] = instructor.get_display_name()
         except User.DoesNotExist:
             filters['instructor_name'] = 'Unknown'
     
@@ -1157,7 +1237,15 @@ def export_feedback_pdf(request):
         pdf_buffer = generate_feedback_report_pdf(feedback_qs, filters, user)
         
         response = HttpResponse(pdf_buffer, content_type='application/pdf')
-        filename = f"feedback-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pdf"
+        
+        # Generate filename with professor name if filtered
+        if filters.get('instructor_name'):
+            # Replace spaces with underscores and remove special characters
+            prof_name = filters['instructor_name'].replace(' ', '_').replace(',', '')
+            filename = f"feedback-report-{prof_name}-{datetime.now().strftime('%Y%m%d')}.pdf"
+        else:
+            filename = f"feedback-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pdf"
+        
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
         

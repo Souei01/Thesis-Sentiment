@@ -56,6 +56,33 @@ class User(AbstractUser):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
     
+    def get_display_name(self):
+        """Get a user-friendly display name for faculty"""
+        if self.role == 'faculty':
+            # Extract faculty identifier from email (e.g., facultyCS1 -> CSprofessor-1)
+            email_prefix = self.email.split('@')[0]  # Get facultyCS1 from facultyCS1@wmsu.edu.ph
+            
+            # Check if it matches the pattern facultyXX# where XX is dept and # is number
+            if email_prefix.startswith('faculty'):
+                dept_and_num = email_prefix.replace('faculty', '')  # CS1, IT2, ICT3
+                
+                # Extract department code (letters) and number (digits)
+                dept_code = ''.join([c for c in dept_and_num if c.isalpha()])  # CS, IT, ICT
+                prof_num = ''.join([c for c in dept_and_num if c.isdigit()])   # 1, 2, 3
+                
+                if dept_code and prof_num:
+                    return f"{dept_code}professor-{prof_num}"
+            
+            # Fallback: use first/last name or email
+            if self.first_name and self.last_name:
+                return f"{self.first_name} {self.last_name}"
+            return self.email.split('@')[0]
+        
+        # For non-faculty, use full name or email
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.email
+    
     def __str__(self):
         if self.role == 'admin' and self.admin_subrole:
             return f"{self.email} ({self.get_admin_subrole_display()})"

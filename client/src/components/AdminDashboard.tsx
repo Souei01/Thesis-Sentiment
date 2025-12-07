@@ -101,6 +101,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const [error, setError] = useState<string | null>(null);
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [academicYear, setAcademicYear] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [instructorId, setInstructorId] = useState('all');
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
@@ -145,7 +146,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   // Fetch analytics data
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedSemester, academicYear, instructorId]);
+  }, [selectedSemester, academicYear, instructorId, selectedDepartment]);
 
   // Fetch emotion and topic data when switching tabs
   useEffect(() => {
@@ -154,7 +155,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     } else if (activeTab === 'topics') {
       fetchTopicData();
     }
-  }, [activeTab, selectedSemester, academicYear, instructorId]);
+  }, [activeTab, selectedSemester, academicYear, instructorId, selectedDepartment]);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -164,6 +165,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
 
       const response = await axiosInstance.get(`/feedback/analytics/?${params.toString()}`);
       setAnalytics(response.data);
@@ -182,6 +184,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
 
       const response = await axiosInstance.get(`/emotions/analytics/?${params.toString()}`);
       setEmotionData(response.data);
@@ -211,6 +214,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
 
       const response = await axiosInstance.get(`/feedback/export-pdf/?${params.toString()}`, {
         responseType: 'blob',
@@ -467,22 +471,39 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
 
               {/* Instructor Filter (Admin only) */}
               {userRole === 'admin' && (
-                <div className="space-y-2">
-                  <Label htmlFor="instructor">Instructor</Label>
-                  <Select value={instructorId} onValueChange={setInstructorId}>
-                    <SelectTrigger id="instructor">
-                      <SelectValue placeholder="All Instructors" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Instructors</SelectItem>
-                      {instructors.map((instructor) => (
-                        <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                          {instructor.first_name} {instructor.last_name} ({instructor.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department</Label>
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger id="department">
+                        <SelectValue placeholder="All Departments" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Departments</SelectItem>
+                        <SelectItem value="CS">Computer Science</SelectItem>
+                        <SelectItem value="IT">Information Technology</SelectItem>
+                        <SelectItem value="ICT">ICT</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="instructor">Instructor</Label>
+                    <Select value={instructorId} onValueChange={setInstructorId}>
+                      <SelectTrigger id="instructor">
+                        <SelectValue placeholder="All Instructors" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Instructors</SelectItem>
+                        {instructors.map((instructor) => (
+                          <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                            {instructor.first_name} {instructor.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
             </div>
           </CardContent>

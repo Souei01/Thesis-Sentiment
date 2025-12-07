@@ -79,15 +79,37 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
     )
     
     # Title
-    elements.append(Paragraph("Faculty Performance Evaluation Report", title_style))
-    elements.append(Paragraph("AI-Powered Sentiment Analysis System", ParagraphStyle(
-        'Subtitle',
-        parent=styles['Normal'],
-        fontSize=11,
-        textColor=colors.HexColor('#666666'),
-        alignment=TA_CENTER,
-        spaceAfter=12
-    )))
+    if filters.get('instructor_name'):
+        # Professor-specific report
+        elements.append(Paragraph(f"Faculty Performance Evaluation Report", title_style))
+        elements.append(Paragraph(f"Professor: {filters['instructor_name']}", ParagraphStyle(
+            'ProfessorName',
+            parent=styles['Normal'],
+            fontSize=16,
+            textColor=colors.HexColor('#8E1B1B'),
+            alignment=TA_CENTER,
+            spaceAfter=6,
+            fontName='Helvetica-Bold'
+        )))
+        elements.append(Paragraph("AI-Powered Sentiment Analysis System", ParagraphStyle(
+            'Subtitle',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=colors.HexColor('#666666'),
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )))
+    else:
+        # General report
+        elements.append(Paragraph("Faculty Performance Evaluation Report", title_style))
+        elements.append(Paragraph("AI-Powered Sentiment Analysis System", ParagraphStyle(
+            'Subtitle',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=colors.HexColor('#666666'),
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )))
     elements.append(Spacer(1, 0.15*inch))
     
     # Report metadata in a clean box

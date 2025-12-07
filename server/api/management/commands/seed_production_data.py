@@ -197,12 +197,13 @@ class Command(BaseCommand):
                     faculty_key = f'{dept}_{faculty_index}'
                     
                     if course_code in courses and faculty_key in faculty_users:
+                        course_obj = courses[course_code]
                         assignment, created = CourseAssignment.objects.get_or_create(
-                            course=courses[course_code],
+                            course=course_obj,
                             instructor=faculty_users[faculty_key],
                             year_level=year_level,
                             section=section_name,
-                            department=dept,
+                            department=course_obj.department,  # Use course's department, not dept variable
                             semester=semester,
                             academic_year=academic_year,
                             defaults={'is_active': True}
