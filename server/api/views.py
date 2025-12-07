@@ -1363,42 +1363,42 @@ def get_response_stats(request):
     # Get total students (enrolled)
     total_students = enrollments_qs.count()
     
-    # Get enrollments with feedback submissions
-    enrollments_with_feedback = enrollments_qs.filter(
-        feedback__isnull=False,
-        feedback__status='submitted'
-    ).distinct()
-    
-    # Get respondents details
+    # Get respondents - students who submitted feedback
     respondents = []
-    for enrollment in enrollments_with_feedback:
-        feedback = enrollment.feedback.filter(status='submitted').first()
+    respondent_ids = set()
+    
+    for enrollment in enrollments_qs:
+        # Check if there's feedback for this enrollment's course assignment and student
+        feedback = Feedback.objects.filter(
+            student=enrollment.student,
+            course_assignment=enrollment.course_assignment,
+            status='submitted'
+        ).first()
+        
         if feedback:
+            respondent_ids.add(enrollment.student.id)
             respondents.append({
                 'id': enrollment.student.id,
                 'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
                 'email': enrollment.student.email,
                 'student_id': enrollment.student.student_id,
-                'course': f"{enrollment.assignment.course.code} - {enrollment.assignment.course.name}",
-                'section': enrollment.assignment.section,
+                'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
+                'section': enrollment.course_assignment.section,
                 'submitted_at': feedback.submitted_at.isoformat() if feedback.submitted_at else feedback.created_at.isoformat()
             })
     
     # Get non-respondents
-    enrollments_without_feedback = enrollments_qs.exclude(
-        id__in=enrollments_with_feedback.values_list('id', flat=True)
-    )
-    
     non_respondents = []
-    for enrollment in enrollments_without_feedback:
-        non_respondents.append({
-            'id': enrollment.student.id,
-            'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
-            'email': enrollment.student.email,
-            'student_id': enrollment.student.student_id,
-            'course': f"{enrollment.assignment.course.code} - {enrollment.assignment.course.name}",
-            'section': enrollment.assignment.section
-        })
+    for enrollment in enrollments_qs:
+        if enrollment.student.id not in respondent_ids:
+            non_respondents.append({
+                'id': enrollment.student.id,
+                'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+                'email': enrollment.student.email,
+                'student_id': enrollment.student.student_id,
+                'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
+                'section': enrollment.course_assignment.section
+            })
     
     # Calculate response rate
     total_responses = len(respondents)
@@ -1409,10 +1409,16 @@ def get_response_stats(request):
     from django.db.models.functions import TruncDate
     thirty_days_ago = datetime.now() - timedelta(days=30)
     
+    # Get student and course_assignment IDs from enrollments
+    student_ids = enrollments_qs.values_list('student_id', flat=True)
+    assignment_ids = enrollments_qs.values_list('course_assignment_id', flat=True)
+    
+    # Filter feedback by students and course assignments in scope
     submissions_by_date = Feedback.objects.filter(
         status='submitted',
         created_at__gte=thirty_days_ago,
-        enrollment__in=enrollments_qs
+        student__in=student_ids,
+        course_assignment__in=assignment_ids
     ).annotate(
         date=TruncDate('created_at')
     ).values('date').annotate(count=Count('id')).order_by('date')
