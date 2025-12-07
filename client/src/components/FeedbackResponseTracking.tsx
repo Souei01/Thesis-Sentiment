@@ -119,10 +119,29 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
       if (department && department !== 'all') params.append('department', department);
 
       const response = await axiosInstance.get(`/feedback/response-stats/?${params.toString()}`);
-      setStats(response.data);
+      
+      // Ensure arrays exist even if empty
+      const data = response.data;
+      setStats({
+        total_students: data.total_students || 0,
+        total_responses: data.total_responses || 0,
+        response_rate: data.response_rate || 0,
+        respondents: data.respondents || [],
+        non_respondents: data.non_respondents || [],
+        submissions_over_time: data.submissions_over_time || []
+      });
     } catch (error: any) {
       console.error('Error fetching response stats:', error);
       setError(error.response?.data?.error || error.message || 'Failed to load response statistics');
+      // Set empty stats on error
+      setStats({
+        total_students: 0,
+        total_responses: 0,
+        response_rate: 0,
+        respondents: [],
+        non_respondents: [],
+        submissions_over_time: []
+      });
     } finally {
       setLoading(false);
     }
@@ -169,7 +188,9 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   // Filter and paginate data
   // Filter by search query
   const filteredData = useMemo(() => {
-    const currentData = activeTab === 'respondents' ? stats.respondents : stats.non_respondents;
+    if (!stats) return [];
+    
+    const currentData = activeTab === 'respondents' ? (stats.respondents || []) : (stats.non_respondents || []);
     
     if (!searchQuery.trim()) return currentData;
     
@@ -189,7 +210,7 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, endIndex);
   
-  const currentDataLength = activeTab === 'respondents' ? stats.respondents.length : stats.non_respondents.length;
+  const currentDataLength = activeTab === 'respondents' ? (stats?.respondents?.length || 0) : (stats?.non_respondents?.length || 0);
   
   // Reset to page 1 when search or tab changes
   useEffect(() => {
