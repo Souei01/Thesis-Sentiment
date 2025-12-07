@@ -214,7 +214,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
-      const response = await axiosInstance.get(`/emotions/analytics/?${params.toString()}`);\n      setEmotionData(response.data);
+      const response = await axiosInstance.get(`/emotions/analytics/?${params.toString()}`);
       setEmotionData(response.data);
     } catch (error: any) {
       console.error('Error fetching emotion analytics:', error);
