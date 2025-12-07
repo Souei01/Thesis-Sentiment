@@ -123,18 +123,33 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const [topicLoading, setTopicLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  // Fetch instructors, courses and academic years if admin or faculty
+  // Fetch instructors when department changes
   useEffect(() => {
     if (userRole === 'admin') {
       fetchInstructors();
+    }
+  }, [userRole, selectedDepartment]);
+
+  // Fetch available years once
+  useEffect(() => {
+    if (userRole === 'admin') {
       fetchAvailableYears();
     }
+  }, [userRole]);
+
+  // Fetch courses when department or instructor changes
+  useEffect(() => {
     fetchCourses();
-  }, [userRole, selectedDepartment, instructorId]);
+  }, [selectedDepartment, instructorId]);
 
   const fetchInstructors = async () => {
     try {
-      const response = await axiosInstance.get('/auth/users/?role=faculty');
+      const params = new URLSearchParams({ role: 'faculty' });
+      if (selectedDepartment && selectedDepartment !== 'all') {
+        params.append('department', selectedDepartment);
+      }
+      
+      const response = await axiosInstance.get(`/auth/users/?${params.toString()}`);
       setInstructors(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching instructors:', error);

@@ -173,6 +173,7 @@ class UserListView(APIView):
             
             # Get role from query params
             role = request.query_params.get('role', None)
+            department = request.query_params.get('department', None)
             
             # Filter users by role if provided
             if role:
@@ -180,8 +181,12 @@ class UserListView(APIView):
             else:
                 users = User.objects.all().order_by('last_name', 'first_name')
             
+            # Filter by department if provided (for cascading dropdowns)
+            if department and department != 'all':
+                users = users.filter(department=department)
+            
             # RBAC: Department head restrictions for faculty list
-            if role == 'faculty' and request.user.admin_subrole:
+            elif role == 'faculty' and request.user.admin_subrole:
                 if request.user.admin_subrole == 'dept_head_cs':
                     # CS Department Head: only CS faculty
                     users = users.filter(department='CS')
