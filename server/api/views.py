@@ -1376,8 +1376,13 @@ def get_response_stats(request):
     # Get all submitted feedbacks at once
     feedbacks = {}
     if feedback_queries:
+        # Combine Q objects with OR
+        combined_q = feedback_queries[0]
+        for q in feedback_queries[1:]:
+            combined_q |= q
+        
         feedback_qs = Feedback.objects.filter(
-            django_models.Q(*feedback_queries, _connector=django_models.Q.OR),
+            combined_q,
             status='submitted'
         ).select_related('student', 'course_assignment__course')
         
