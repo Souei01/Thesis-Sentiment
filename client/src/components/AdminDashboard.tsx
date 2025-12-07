@@ -540,7 +540,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                         <SelectItem value="all">All Departments</SelectItem>
                         <SelectItem value="CS">Computer Science</SelectItem>
                         <SelectItem value="IT">Information Technology</SelectItem>
-                        <SelectItem value="ICT">ICT</SelectItem>
+                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

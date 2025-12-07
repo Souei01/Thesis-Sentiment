@@ -1406,19 +1406,20 @@ def get_response_stats(request):
     
     # Get submissions over time (last 30 days)
     from datetime import datetime, timedelta
+    from django.db.models.functions import TruncDate
     thirty_days_ago = datetime.now() - timedelta(days=30)
     
     submissions_by_date = Feedback.objects.filter(
         status='submitted',
         created_at__gte=thirty_days_ago,
         enrollment__in=enrollments_qs
-    ).extra(
-        select={'date': 'DATE(created_at)'}
+    ).annotate(
+        date=TruncDate('created_at')
     ).values('date').annotate(count=Count('id')).order_by('date')
     
     submissions_over_time = [
         {
-            'date': item['date'].isoformat() if hasattr(item['date'], 'isoformat') else str(item['date']),
+            'date': item['date'].isoformat() if item['date'] else str(item['date']),
             'count': item['count']
         }
         for item in submissions_by_date
@@ -1428,6 +1429,10 @@ def get_response_stats(request):
         'total_students': total_students,
         'total_responses': total_responses,
         'response_rate': response_rate,
+        'respondents': respondents,
+        'non_respondents': non_respondents,
+        'submissions_over_time': submissions_over_time
+    }, status=status.HTTP_200_OK)
         'respondents': respondents,
         'non_respondents': non_respondents,
         'submissions_over_time': submissions_over_time
