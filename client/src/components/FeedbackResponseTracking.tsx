@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -67,21 +67,7 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
-  useEffect(() => {
-    if (userRole === 'admin') {
-      fetchInstructors();
-    }
-  }, [userRole, department]);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [instructorId, department]);
-
-  useEffect(() => {
-    fetchResponseStats();
-  }, [semester, academicYear, instructorId, courseId, department]);
-
-  const fetchInstructors = async () => {
+  const fetchInstructors = useCallback(async () => {
     try {
       const params = new URLSearchParams({ role: 'faculty' });
       if (department && department !== 'all') params.append('department', department);
@@ -91,9 +77,9 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
     } catch (error) {
       console.error('Error fetching instructors:', error);
     }
-  };
+  }, [department]);
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
@@ -105,9 +91,9 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
       console.error('Error fetching courses:', error);
       setCourses([]);
     }
-  };
+  }, [instructorId, department]);
 
-  const fetchResponseStats = async () => {
+  const fetchResponseStats = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -145,7 +131,21 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
     } finally {
       setLoading(false);
     }
-  };
+  }, [semester, academicYear, instructorId, courseId, department]);
+
+  useEffect(() => {
+    if (userRole === 'admin') {
+      fetchInstructors();
+    }
+  }, [userRole, fetchInstructors]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    fetchResponseStats();
+  }, [fetchResponseStats]);
 
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
