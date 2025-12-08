@@ -14,9 +14,22 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from django.db.models import Avg, Count, Q
+from xml.sax.saxutils import escape
 
 def generate_feedback_report_pdf(feedback_qs, filters, user):
     """Generate a comprehensive PDF report for feedback data"""
+    
+    def clean_text(text):
+        """Clean text for safe PDF rendering"""
+        if not text:
+            return ""
+        # Escape XML special characters
+        text = escape(str(text))
+        # Remove or replace problematic characters
+        text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
+        text = text.replace('&amp;', '&')  # Unescape ampersand after escape
+        return text
+    
     try:
         buffer = BytesIO()
         doc = SimpleDocTemplate(
@@ -409,18 +422,18 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         if positive_comments:
             elements.append(Paragraph("<b>What Students Appreciate:</b>", subheading_style))
             for comment in positive_comments[:3]:
-                # Truncate long comments
+                # Truncate and clean long comments
+                comment = clean_text(comment)
                 display_comment = comment[:200] + "..." if len(comment) > 200 else comment
                 elements.append(Paragraph(f'• "{display_comment}"', 
                     ParagraphStyle('CommentStyle', parent=normal_style, leftIndent=15, fontSize=9, 
                                   textColor=colors.HexColor('#1F2937'), leading=12, spaceAfter=6)))
-            elements.append(Spacer(1, 0.1*inch)) 
-                                  textColor=colors.HexColor('#374151'), fontStyle='italic')))
-                elements.append(Spacer(1, 0.08*inch))
+            elements.append(Spacer(1, 0.1*inch))
         
         if improvement_comments:
             elements.append(Paragraph("<b>Suggestions for Enhancement:</b>", subheading_style))
             for comment in improvement_comments[:3]:
+                comment = clean_text(comment)
                 display_comment = comment[:200] + "..." if len(comment) > 200 else comment
                 elements.append(Paragraph(f'• "{display_comment}"', 
                     ParagraphStyle('CommentStyle', parent=normal_style, leftIndent=15, fontSize=9,
@@ -474,17 +487,12 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         return buffer
         
     except Exception as e:
-        # If PDF generation fails, create a simple error report
+        # If PDF generation fails, return error info that can be logged
         import traceback
-        error_buffer = BytesIO()
-        error_doc = SimpleDocTemplate(error_buffer, pagesize=letter)
-        error_elements = []
-        error_styles = getSampleStyleSheet()
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"PDF generation error: {str(e)}")
+        logger.error(traceback.format_exc())
         
-        error_elements.append(Paragraph("Error Generating Report", error_styles['Heading1']))
-        error_elements.append(Paragraph(f"An error occurred: {str(e)}", error_styles['Normal']))
-        error_elements.append(Paragraph(f"Traceback: {traceback.format_exc()}", error_styles['Normal']))
-        
-        error_doc.build(error_elements)
-        error_buffer.seek(0)
-        return error_buffer
+        # Re-raise to let the view handle it properly
+        raise Exception(f"PDF generation failed: {str(e)}")

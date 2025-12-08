@@ -52,6 +52,15 @@ export default function DashboardPage() {
 
   const handleSubmitFeedback = async (courseId: string, feedback: FeedbackFormData) => {
     try {
+      // Optimistic update - immediately mark as submitted in UI
+      setCourses(prevCourses => 
+        prevCourses.map(course => 
+          course.id === courseId 
+            ? { ...course, hasSubmittedFeedback: true }
+            : course
+        )
+      );
+
       const token = Cookies.get('access_token');
       await axiosInstance.post(
         '/feedback/',
@@ -66,10 +75,17 @@ export default function DashboardPage() {
         }
       );
       
-      // Refresh courses to update feedback status
-      fetchEnrolledCourses();
+      // Success - optimistic update was correct, no need to refetch
     } catch (err: any) {
       console.error('Error submitting feedback:', err);
+      // Revert optimistic update on error
+      setCourses(prevCourses => 
+        prevCourses.map(course => 
+          course.id === courseId 
+            ? { ...course, hasSubmittedFeedback: false }
+            : course
+        )
+      );
       throw err;
     }
   };
