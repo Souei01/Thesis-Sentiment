@@ -910,8 +910,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
 
         {/* Third Row - Radar and Experience */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
-          {/* All Areas Radar - 4 columns */}
-          <Card className="md:col-span-4">
+          {/* Overall Performance Radar - 2 columns */}
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-base">Overall Performance Radar</CardTitle>
             </CardHeader>
@@ -942,8 +942,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
             </CardContent>
           </Card>
 
-          {/* Overall Experience - 2 columns */}
-          <Card className="md:col-span-2">
+          {/* Overall Experience - 4 columns */}
+          <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle className="text-base">Overall Experience</CardTitle>
               <CardDescription className="text-xs">Percentage of students agreeing</CardDescription>
