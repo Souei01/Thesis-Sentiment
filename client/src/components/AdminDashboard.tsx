@@ -409,12 +409,31 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     { name: 'LMS Useful', value: analytics.course_info?.lms_resources_useful || 0, color: '#14b8a6' },
   ];
 
+  const learningData = [
+    { name: 'Teaching Strategies', value: analytics.independent_learning?.teaching_strategies || 0 },
+    { name: 'Student Esteem', value: analytics.independent_learning?.student_esteem || 0 },
+    { name: 'Student Autonomy', value: analytics.independent_learning?.student_autonomy || 0 },
+    { name: 'Independent Thinking', value: analytics.independent_learning?.independent_thinking || 0 },
+    { name: 'Beyond Required', value: analytics.independent_learning?.beyond_required || 0 },
+  ];
+
+  const assessmentData = [
+    { name: 'Clear Communication', value: analytics.feedback_assessment?.clear_communication || 0 },
+    { name: 'Timely Feedback', value: analytics.feedback_assessment?.timely_feedback || 0 },
+    { name: 'Improvement Feedback', value: analytics.feedback_assessment?.improvement_feedback || 0 },
+  ];
+
+  const experienceData = [
+    { name: 'Worthwhile Class', value: analytics.course_info?.worthwhile_class || 0, color: '#22c55e' },
+    { name: 'Would Recommend', value: analytics.course_info?.would_recommend || 0, color: '#3b82f6' },
+  ];
+
   const allRatingsData = [
     { subject: 'Commitment', value: (commitmentData.reduce((a, b) => a + b.value, 0) / commitmentData.length) || 0 },
     { subject: 'Knowledge', value: (knowledgeData.reduce((a, b) => a + b.value, 0) / knowledgeData.length) || 0 },
-    { subject: 'Learning', value: analytics.independent_learning?.teaching_strategies || 0 },
+    { subject: 'Learning', value: (learningData.reduce((a, b) => a + b.value, 0) / learningData.length) || 0 },
     { subject: 'Management', value: (managementData.reduce((a, b) => a + b.value, 0) / managementData.length) || 0 },
-    { subject: 'Feedback', value: analytics.feedback_assessment?.clear_communication || 0 },
+    { subject: 'Assessment', value: (assessmentData.reduce((a, b) => a + b.value, 0) / assessmentData.length) || 0 },
   ];
 
   // Calculate sentiment data (no useMemo to avoid dependency loops)
@@ -760,8 +779,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
 
         {/* Second Row - Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
-          {/* Management - 3 columns */}
-          <Card className="md:col-span-3">
+          {/* Management - 2 columns */}
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-base">Management of Learning</CardTitle>
             </CardHeader>
@@ -778,8 +797,47 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
             </CardContent>
           </Card>
 
-          {/* All Areas Radar - 3 columns */}
-          <Card className="md:col-span-3">
+          {/* Teaching & Learning - 2 columns */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Teaching & Learning Strategies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={learningData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 10 }} />
+                  <YAxis domain={[0, 5]} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Feedback & Assessment - 2 columns */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Feedback & Assessment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={assessmentData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" domain={[0, 5]} />
+                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#8b5cf6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Third Row - Radar and Experience */}
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
+          {/* All Areas Radar - 4 columns */}
+          <Card className="md:col-span-4">
             <CardHeader>
               <CardTitle className="text-base">Overall Performance Radar</CardTitle>
             </CardHeader>
@@ -801,9 +859,32 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               </ResponsiveContainer>
             </CardContent>
           </Card>
+
+          {/* Overall Experience - 2 columns */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base">Overall Experience</CardTitle>
+              <CardDescription className="text-xs">Percentage of students agreeing</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={experienceData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" domain={[0, 100]} />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
+                  <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
+                  <Bar dataKey="value">
+                    {experienceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Third Row - Course Info */}
+        {/* Fourth Row - Course Info */}
         <div className="grid grid-cols-1 gap-6 mb-6">
           <Card>
             <CardHeader>

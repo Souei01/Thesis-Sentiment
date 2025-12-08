@@ -9,6 +9,7 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.piecharts import Pie
 from io import BytesIO
 from datetime import datetime
+import pytz
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -113,8 +114,6 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
     elements.append(Spacer(1, 0.15*inch))
     
     # Report metadata in a clean box
-    from django.utils import timezone
-    import pytz
     ph_tz = pytz.timezone('Asia/Manila')
     now_ph = datetime.now(ph_tz)
     
