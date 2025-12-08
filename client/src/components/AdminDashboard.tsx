@@ -294,6 +294,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
       const response = await axiosInstance.get(`/feedback/analytics/?${params.toString()}`);
+      console.log('Analytics Response - Semester:', selectedSemester);
+      console.log('Text Feedback Count:', response.data.text_feedback?.length);
+      console.log('Sample Feedback:', response.data.text_feedback?.slice(0, 2));
       setAnalytics(response.data);
     } catch (error: any) {
       console.error('Error fetching analytics:', error);
