@@ -121,13 +121,32 @@ interface TopicData {
   }>;
 }
 
-export default function AdminDashboard({ userRole = 'admin' }: { userRole?: string }) {
+interface AdminDashboardProps {
+  userRole?: string;
+  user?: {
+    id: number;
+    email: string;
+    department?: string;
+    role: string;
+  } | null;
+}
+
+export default function AdminDashboard({ userRole = 'admin', user }: AdminDashboardProps) {
   const [analytics, setAnalytics] = useState<FeedbackAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [academicYear, setAcademicYear] = useState('all');
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  
+  // Determine if user is department head and their department
+  const isDepartmentHead = user?.email?.includes('.head@wmsu.edu.ph');
+  const userDepartment = user?.department || (isDepartmentHead && user?.email ? user.email.split('.')[0].toUpperCase() : null);
+  
+  // IT head can filter IT and ACT, CS head can only see CS
+  const isITHead = isDepartmentHead && userDepartment === 'IT';
+  const isCSHead = isDepartmentHead && userDepartment === 'CS';
+  
+  const [selectedDepartment, setSelectedDepartment] = useState(isDepartmentHead && userDepartment ? userDepartment : 'all');
   const [instructorId, setInstructorId] = useState('all');
   const [courseId, setCourseId] = useState('all');
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -142,10 +161,10 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
 
   // Fetch instructors when department changes
   useEffect(() => {
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || isDepartmentHead) {
       fetchInstructors();
     }
-  }, [userRole, selectedDepartment]);
+  }, [userRole, selectedDepartment, isDepartmentHead]);
 
   // Fetch available years once
   useEffect(() => {
@@ -162,7 +181,21 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const fetchInstructors = async () => {
     try {
       const params = new URLSearchParams({ role: 'faculty' });
-      if (selectedDepartment && selectedDepartment !== 'all') {
+      
+      // Filter by department based on user role
+      if (isCSHead) {
+        // CS head can only see CS instructors
+        params.append('department', 'CS');
+      } else if (isITHead) {
+        // IT head can see IT or ACT instructors based on selected department
+        if (selectedDepartment && selectedDepartment !== 'all') {
+          params.append('department', selectedDepartment);
+        } else {
+          // If "all" selected for IT head, show IT and ACT (handled by backend)
+          params.append('department', 'IT,ACT');
+        }
+      } else if (selectedDepartment && selectedDepartment !== 'all') {
+        // Admin can filter by any department
         params.append('department', selectedDepartment);
       }
       
@@ -176,7 +209,24 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const fetchCourses = async () => {
     try {
       const params = new URLSearchParams();
-      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      
+      // Filter by department based on user role
+      if (isCSHead) {
+        // CS head can only see CS courses
+        params.append('department', 'CS');
+      } else if (isITHead) {
+        // IT head can see IT or ACT courses based on selected department
+        if (selectedDepartment && selectedDepartment !== 'all') {
+          params.append('department', selectedDepartment);
+        } else {
+          // If "all" selected for IT head, show IT and ACT
+          params.append('department', 'IT,ACT');
+        }
+      } else if (selectedDepartment && selectedDepartment !== 'all') {
+        // Admin can filter by any department
+        params.append('department', selectedDepartment);
+      }
+      
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
       
       const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
@@ -593,20 +643,29 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                 </Select>
               </div>
 
-              {/* Instructor Filter (Admin only) */}
-              {userRole === 'admin' && (
+              {/* Department Filter - Hidden for CS head, IT/ACT only for IT head, All for Admin */}
+              {(userRole === 'admin' || isITHead) && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
+                    <Select 
+                      value={selectedDepartment} 
+                      onValueChange={handleDepartmentChange}
+                    >
                       <SelectTrigger id="department">
-                        <SelectValue placeholder="All Departments" />
+                        <SelectValue placeholder="Select Department" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Departments</SelectItem>
-                        <SelectItem value="CS">Computer Science</SelectItem>
-                        <SelectItem value="IT">Information Technology</SelectItem>
-                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
+                        {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
+                        {userRole === 'admin' && (
+                          <SelectItem value="CS">Computer Science</SelectItem>
+                        )}
+                        {(userRole === 'admin' || isITHead) && (
+                          <SelectItem value="IT">Information Technology</SelectItem>
+                        )}
+                        {(userRole === 'admin' || isITHead) && (
+                          <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -633,6 +692,45 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     <Select value={courseId} onValueChange={setCourseId}>
                       <SelectTrigger id="course">
                         <SelectValue placeholder="All Courses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Courses</SelectItem>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={course.id.toString()}>
+                            {course.code} - {course.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {/* Instructor and Course filters for CS head (no department filter) */}
+              {isCSHead && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="instructor">Instructor (CS Only)</Label>
+                    <Select value={instructorId} onValueChange={handleInstructorChange}>
+                      <SelectTrigger id="instructor">
+                        <SelectValue placeholder="All CS Instructors" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Instructors</SelectItem>
+                        {instructors.map((instructor) => (
+                          <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                            {instructor.display_name || `${instructor.first_name} ${instructor.last_name}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="course">Course/Subject (CS Only)</Label>
+                    <Select value={courseId} onValueChange={setCourseId}>
+                      <SelectTrigger id="course">
+                        <SelectValue placeholder="All CS Courses" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Courses</SelectItem>

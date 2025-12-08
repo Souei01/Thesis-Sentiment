@@ -96,7 +96,7 @@ export default function DashboardPage() {
     return (
       <ProtectedRoute allowedRoles={['admin', 'faculty']}>
         <DashboardLayout>
-          <AdminDashboard userRole={user?.role || 'faculty'} />
+          <AdminDashboard userRole={user?.role || 'faculty'} user={user} />
         </DashboardLayout>
       </ProtectedRoute>
     );
