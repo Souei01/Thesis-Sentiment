@@ -19,8 +19,17 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
     const loadSentimentWords = async () => {
       try {
         const response = await axiosInstance.get('/feedback/sentiment-words/');
-        setPositiveWords(new Set(response.data.positive || []));
-        setNegativeWords(new Set(response.data.negative || []));
+        const positive = new Set(response.data.positive || []);
+        const negative = new Set(response.data.negative || []);
+        
+        console.log('Loaded sentiment words:', {
+          positiveCount: positive.size,
+          negativeCount: negative.size,
+          hasBest: positive.has('best')
+        });
+        
+        setPositiveWords(positive);
+        setNegativeWords(negative);
       } catch (error) {
         console.error('Error loading sentiment words:', error);
         // Fallback to basic word lists if API fails

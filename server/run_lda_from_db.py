@@ -94,7 +94,8 @@ print(f'Document-term matrix shape: {doc_term_matrix.shape}')
 
 # Train LDA model
 print('\nTraining LDA model...')
-n_topics = min(5, len(all_feedback) // 2)  # Adjust topics based on data size
+# Use 8 topics as target, but scale down for smaller datasets
+n_topics = min(8, max(3, len(all_feedback) // 3))
 
 lda_model = LatentDirichletAllocation(
     n_components=n_topics,
@@ -148,12 +149,25 @@ def generate_topic_name(keywords):
 def display_topics(model, feature_names, n_top_words=10):
     """Display top words for each topic with meaningful names"""
     topics = {}
+    used_names = {}  # Track used names to ensure uniqueness
+    
     for topic_idx, topic in enumerate(model.components_):
         top_indices = topic.argsort()[-n_top_words:][::-1]
         top_words = [feature_names[i] for i in top_indices]
         
         # Generate meaningful topic name
-        topic_name = generate_topic_name(top_words)
+        base_name = generate_topic_name(top_words)
+        
+        # Make name unique if already used
+        if base_name in used_names:
+            used_names[base_name] += 1
+            # Add descriptor from top keywords to differentiate
+            unique_keyword = top_words[0].title()
+            topic_name = f"{base_name} ({unique_keyword})"
+        else:
+            used_names[base_name] = 1
+            topic_name = base_name
+        
         topics[topic_name] = top_words
         
         print(f'\n{topic_name}:')

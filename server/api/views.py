@@ -1080,8 +1080,9 @@ def get_topic_modeling_data(request):
         doc_term_matrix = vectorizer.fit_transform(all_feedback['cleaned_text'])
         feature_names = vectorizer.get_feature_names_out()
         
-        # Train LDA model
-        n_topics = min(5, len(all_feedback) // 2)
+        # Train LDA model - dynamically adjust topics based on data size
+        # Use 8 topics as target, but scale down for smaller datasets
+        n_topics = min(8, max(3, len(all_feedback) // 3))
         
         lda_model = LatentDirichletAllocation(
             n_components=n_topics,
@@ -1124,11 +1125,22 @@ def get_topic_modeling_data(request):
         # Extract topics with meaningful names
         topics_data = []
         topic_name_map = {}
+        used_names = {}  # Track used names to ensure uniqueness
         
         for topic_idx, topic in enumerate(lda_model.components_):
             top_indices = topic.argsort()[-15:][::-1]
             top_words = [feature_names[i] for i in top_indices]
-            topic_name = generate_topic_name(top_words)
+            base_name = generate_topic_name(top_words)
+            
+            # Make name unique if already used
+            if base_name in used_names:
+                used_names[base_name] += 1
+                # Add descriptor from top keywords to differentiate
+                unique_keyword = top_words[0].title()
+                topic_name = f"{base_name} ({unique_keyword})"
+            else:
+                used_names[base_name] = 1
+                topic_name = base_name
             
             topic_name_map[topic_idx] = topic_name
             topics_data.append({

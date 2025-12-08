@@ -227,7 +227,12 @@ export default function TopicModelingDashboard({ topics, topicDistribution, tota
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {topics.map((topic, index) => {
+            {topics
+              .filter((topic) => {
+                const count = topicDistribution[topic.topic] || 0;
+                return count > 0; // Only show topics with at least 1 feedback
+              })
+              .map((topic, index) => {
               const count = topicDistribution[topic.topic] || 0;
               const percentage = totalFeedback > 0 ? ((count / totalFeedback) * 100).toFixed(1) : '0';
               
