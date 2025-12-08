@@ -1455,3 +1455,42 @@ def get_response_stats(request):
         'non_respondents': non_respondents,
         'submissions_over_time': submissions_over_time
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def get_sentiment_words(request):
+    """
+    Load positive and negative word lists from text files
+    """
+    from pathlib import Path
+    
+    try:
+        base_path = Path(__file__).parent.parent / 'data' / 'annotations'
+        
+        # Load positive words
+        positive_file = base_path / 'positive-words.txt'
+        positive_words = []
+        if positive_file.exists():
+            with open(positive_file, 'r', encoding='utf-8', errors='ignore') as f:
+                positive_words = [line.strip() for line in f if line.strip()]
+        
+        # Load negative words
+        negative_file = base_path / 'negative-words.txt'
+        negative_words = []
+        if negative_file.exists():
+            with open(negative_file, 'r', encoding='utf-8', errors='ignore') as f:
+                negative_words = [line.strip() for line in f if line.strip()]
+        
+        return Response({
+            'positive': positive_words,
+            'negative': negative_words
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error loading sentiment words: {str(e)}")
+        return Response({
+            'error': 'Failed to load sentiment words',
+            'positive': [],
+            'negative': []
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

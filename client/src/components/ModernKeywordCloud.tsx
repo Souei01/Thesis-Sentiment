@@ -1,34 +1,49 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import axiosInstance from '@/lib/axios';
 
 interface KeywordCloudProps {
   comments: any[];
 }
 
 export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
-  // Define sentiment word lists
-  const positiveWords = new Set([
-    'excellent', 'great', 'good', 'best', 'better', 'amazing', 'wonderful', 'fantastic',
-    'helpful', 'clear', 'engaging', 'knowledgeable', 'patient', 'passionate', 'approachable',
-    'effective', 'appreciate', 'enjoyed', 'love', 'valuable', 'useful', 'relevant',
-    'interactive', 'interesting', 'motivating', 'enthusiastic', 'inspiring', 'supportive',
-    'organized', 'thorough', 'comprehensive', 'well', 'understanding', 'positive',
-    'improvement', 'success', 'quality', 'strength', 'benefits', 'recommend', 'insightful',
-  ]);
+  const [positiveWords, setPositiveWords] = useState<Set<string>>(new Set());
+  const [negativeWords, setNegativeWords] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
-  const negativeWords = new Set([
-    'difficult', 'hard', 'poor', 'bad', 'worst', 'confusing', 'unclear', 'boring',
-    'slow', 'fast', 'rushed', 'limited', 'lack', 'insufficient', 'inadequate',
-    'problems', 'issues', 'concerns', 'disappointing', 'frustrating', 'stress',
-    'challenging', 'struggle', 'weak', 'needs', 'should', 'must',
-    'without', 'never', 'rarely', 'sometimes', 'less', 'missing', 'absent',
-  ]);
+  // Load sentiment words from backend
+  useEffect(() => {
+    const loadSentimentWords = async () => {
+      try {
+        const response = await axiosInstance.get('/feedback/sentiment-words/');
+        setPositiveWords(new Set(response.data.positive || []));
+        setNegativeWords(new Set(response.data.negative || []));
+      } catch (error) {
+        console.error('Error loading sentiment words:', error);
+        // Fallback to basic word lists if API fails
+        setPositiveWords(new Set([
+          'excellent', 'great', 'good', 'best', 'better', 'amazing', 'wonderful', 'fantastic',
+          'helpful', 'clear', 'engaging', 'knowledgeable', 'patient', 'passionate', 'approachable',
+        ]));
+        setNegativeWords(new Set([
+          'difficult', 'hard', 'poor', 'bad', 'worst', 'confusing', 'unclear', 'boring',
+          'slow', 'fast', 'rushed', 'limited', 'lack', 'insufficient', 'inadequate',
+        ]));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSentimentWords();
+  }, []);
 
   // Process comments to extract words and their frequencies
   const keywords = useMemo(() => {
+    if (loading) return [];
+    
     try {
       if (!comments || !Array.isArray(comments) || comments.length === 0) {
         return [];
@@ -91,7 +106,17 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
       console.error('Error processing keywords:', error);
       return [];
     }
-  }, [comments]);
+  }, [comments, positiveWords, negativeWords, loading]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-gray-500">
+        <div className="text-center">
+          <p className="text-lg font-medium mb-2">Loading sentiment dictionary...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!keywords || keywords.length === 0) {
     return (
