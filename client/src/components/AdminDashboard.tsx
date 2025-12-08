@@ -646,30 +646,33 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 </Select>
               </div>
 
-              {/* Department Filter - Hidden for CS head, IT/ACT only for IT head, All for Admin */}
+              {/* Department Filter - Only for Admin and IT head, hidden for CS head */}
+              {(userRole === 'admin' || isITHead) && (
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Select 
+                    value={selectedDepartment} 
+                    onValueChange={handleDepartmentChange}
+                  >
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="Select Department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
+                      {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
+                      {userRole === 'admin' && (
+                        <SelectItem value="CS">Computer Science</SelectItem>
+                      )}
+                      <SelectItem value="IT">Information Technology</SelectItem>
+                      <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Instructor Filter - For Admin and IT head */}
               {(userRole === 'admin' || isITHead) && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Select 
-                      value={selectedDepartment} 
-                      onValueChange={handleDepartmentChange}
-                    >
-                      <SelectTrigger id="department">
-                        <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
-                        {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
-                        {userRole === 'admin' && (
-                          <SelectItem value="CS">Computer Science</SelectItem>
-                        )}
-                        <SelectItem value="IT">Information Technology</SelectItem>
-                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="instructor">Instructor</Label>
                     <Select value={instructorId} onValueChange={handleInstructorChange}>
