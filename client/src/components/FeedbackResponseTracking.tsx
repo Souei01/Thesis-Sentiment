@@ -84,6 +84,8 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [sectionFilter, setSectionFilter] = useState<string>('all');
 
   useEffect(() => {
     if (userRole === 'admin') {
@@ -211,18 +213,53 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   
   const currentData = activeTab === 'respondents' ? (stats.respondents || []) : (stats.non_respondents || []);
   
-  const filteredData = !searchQuery.trim() 
-    ? currentData 
-    : currentData.filter(student => {
-        const query = searchQuery.toLowerCase();
-        return (
-          student.name.toLowerCase().includes(query) ||
-          student.email.toLowerCase().includes(query) ||
-          student.student_id.toLowerCase().includes(query) ||
-          student.course.toLowerCase().includes(query) ||
-          student.section.toLowerCase().includes(query)
+  // Filter data with validation
+  const filteredData = currentData.filter(student => {
+    // Search query filter with validation
+    if (searchQuery && searchQuery.trim().length > 0) {
+      const query = searchQuery.toLowerCase().trim();
+      
+      // Validate search query - only allow alphanumeric, spaces, @, ., -
+      if (!/^[a-zA-Z0-9\s@.\-]+$/.test(query)) {
+        return false;
+      }
+      
+      const matchesSearch = 
+        student.name?.toLowerCase().includes(query) ||
+        student.email?.toLowerCase().includes(query) ||
+        student.student_id?.toLowerCase().includes(query) ||
+        student.feedbacks?.some(f => 
+          f.course?.toLowerCase().includes(query) ||
+          f.section?.toLowerCase().includes(query)
         );
+      
+      if (!matchesSearch) return false;
+    }
+    
+    // Year level filter
+    if (yearFilter && yearFilter !== 'all') {
+      const hasMatchingYear = student.feedbacks?.some(f => {
+        // Extract year from course code (e.g., "CS301" -> 3rd year)
+        const match = f.course?.match(/[A-Z]+(\d)/);
+        if (match) {
+          const yearLevel = match[1];
+          return yearLevel === yearFilter;
+        }
+        return false;
       });
+      if (!hasMatchingYear) return false;
+    }
+    
+    // Section filter
+    if (sectionFilter && sectionFilter !== 'all') {
+      const hasMatchingSection = student.feedbacks?.some(f => 
+        f.section === sectionFilter
+      );
+      if (!hasMatchingSection) return false;
+    }
+    
+    return true;
+  });
   
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -431,18 +468,60 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
           </div>
         </CardHeader>
         <CardContent>
-          {/* Search Bar and Items Per Page */}
-          <div className="flex items-center justify-between mb-4 gap-4">
+          {/* Search Bar, Filters, and Items Per Page */}
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search by name, email, student ID, course, or section..."
+                placeholder="Search by name, email, or student ID..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow alphanumeric, spaces, @, ., -
+                  if (value === '' || /^[a-zA-Z0-9\s@.\-]*$/.test(value)) {
+                    setSearchQuery(value);
+                  }
+                }}
                 className="pl-10"
+                maxLength={50}
               />
             </div>
+            
+            {/* Year Filter */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Year:</Label>
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="1">1st</SelectItem>
+                  <SelectItem value="2">2nd</SelectItem>
+                  <SelectItem value="3">3rd</SelectItem>
+                  <SelectItem value="4">4th</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Section Filter */}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-gray-600">Section:</Label>
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="A">A</SelectItem>
+                  <SelectItem value="B">B</SelectItem>
+                  <SelectItem value="C">C</SelectItem>
+                  <SelectItem value="D">D</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="flex items-center gap-2">
               <Label className="text-sm text-gray-600">Show:</Label>
               <Select value={itemsPerPage.toString()} onValueChange={(val) => setItemsPerPage(Number(val))}>
