@@ -307,7 +307,18 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error('Error exporting report:', error);
-      alert('Failed to export report. Please try again.');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Try to read error message from blob if present
+      if (error.response?.data instanceof Blob) {
+        const text = await error.response.data.text();
+        console.error('Error blob content:', text);
+        alert(`Failed to export report: ${text}`);
+      } else {
+        const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
+        alert(`Failed to export report: ${errorMsg}`);
+      }
     } finally {
       setExporting(false);
     }
