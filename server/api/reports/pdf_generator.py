@@ -9,7 +9,11 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.piecharts import Pie
 from io import BytesIO
 from datetime import datetime
-import pytz
+try:
+    import pytz
+    PYTZ_AVAILABLE = True
+except ImportError:
+    PYTZ_AVAILABLE = False
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -30,18 +34,17 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         text = text.replace('&amp;', '&')  # Unescape ampersand after escape
         return text
     
-    try:
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(
-            buffer, 
-            pagesize=letter, 
-            topMargin=0.5*inch, 
-            bottomMargin=0.5*inch,
-            leftMargin=0.75*inch,
-            rightMargin=0.75*inch
-        )
-        elements = []
-        styles = getSampleStyleSheet()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter, 
+        topMargin=0.5*inch, 
+        bottomMargin=0.5*inch,
+        leftMargin=0.75*inch,
+        rightMargin=0.75*inch
+    )
+    elements = []
+    styles = getSampleStyleSheet()
     
     # Custom styles
     title_style = ParagraphStyle(
@@ -128,12 +131,15 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
     elements.append(Spacer(1, 0.15*inch))
     
     # Report metadata in a clean box
-    try:
-        ph_tz = pytz.timezone('Asia/Manila')
-        now_ph = datetime.now(ph_tz)
-        timestamp = now_ph.strftime('%B %d, %Y at %I:%M %p')
-    except Exception:
-        # Fallback if pytz not available or timezone fails
+    if PYTZ_AVAILABLE:
+        try:
+            ph_tz = pytz.timezone('Asia/Manila')
+            now_ph = datetime.now(ph_tz)
+            timestamp = now_ph.strftime('%B %d, %Y at %I:%M %p')
+        except Exception:
+            timestamp = datetime.now().strftime('%B %d, %Y at %I:%M %p')
+    else:
+        # Fallback if pytz not available
         timestamp = datetime.now().strftime('%B %d, %Y at %I:%M %p')
     
     # Get user identifier - prefer email, fallback to full name
@@ -318,16 +324,16 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         negative = emotion_counts['boredom'] + emotion_counts['disappointment']
         
         sentiment_data = [
-            ['Sentiment', 'Count', '%', 'Interpretation'],
+            ['Sentiment\nCategory', 'Count', 'Percent', 'Interpretation'],
             ['Positive\n(Joy +\nSatisfaction)', str(positive), 
              f"{(positive/total_emotions*100):.1f}%",
-             'Students express enthusiasm\nand contentment'],
+             'Students express enthusiasm and contentment'],
             ['Neutral\n(Acceptance)', str(neutral), 
              f"{(neutral/total_emotions*100):.1f}%",
-             'Students show moderate\nengagement'],
-            ['Negative\n(Boredom +\nDisappointment)', str(negative), 
+             'Students show moderate engagement'],
+            ['Negative\n(Boredom +\nDisappoint.)', str(negative), 
              f"{(negative/total_emotions*100):.1f}%",
-             'Areas requiring attention\nand improvement'],
+             'Areas requiring attention and improvement'],
         ]
         
         sentiment_table = Table(sentiment_data, colWidths=[1.4*inch, 0.8*inch, 0.7*inch, 2.4*inch])
@@ -337,16 +343,13 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (2, -1), 'CENTER'),
             ('ALIGN', (3, 0), (3, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
             ('FONTSIZE', (0, 1), (-1, -1), 8),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ]))
         elements.append(sentiment_table)
         elements.append(Spacer(1, 0.1*inch))
@@ -422,23 +425,22 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         if positive_comments:
             elements.append(Paragraph("<b>What Students Appreciate:</b>", subheading_style))
             for comment in positive_comments[:3]:
-                # Truncate and clean long comments
-                comment = clean_text(comment)
-                display_comment = comment[:200] + "..." if len(comment) > 200 else comment
-                elements.append(Paragraph(f'• "{display_comment}"', 
+                # Truncate long comments and sanitize
+                display_comment = clean_text(comment[:200] + "..." if len(comment) > 200 else comment)
+                elements.append(Paragraph(f"• \"{display_comment}\"", 
                     ParagraphStyle('CommentStyle', parent=normal_style, leftIndent=15, fontSize=9, 
                                   textColor=colors.HexColor('#1F2937'), leading=12, spaceAfter=6)))
-            elements.append(Spacer(1, 0.1*inch))
+                elements.append(Spacer(1, 0.06*inch))
         
         if improvement_comments:
             elements.append(Paragraph("<b>Suggestions for Enhancement:</b>", subheading_style))
             for comment in improvement_comments[:3]:
-                comment = clean_text(comment)
-                display_comment = comment[:200] + "..." if len(comment) > 200 else comment
-                elements.append(Paragraph(f'• "{display_comment}"', 
+                # Truncate long comments and sanitize
+                display_comment = clean_text(comment[:200] + "..." if len(comment) > 200 else comment)
+                elements.append(Paragraph(f"• \"{display_comment}\"", 
                     ParagraphStyle('CommentStyle', parent=normal_style, leftIndent=15, fontSize=9,
                                   textColor=colors.HexColor('#1F2937'), leading=12, spaceAfter=6)))
-                elements.append(Spacer(1, 0.08*inch))
+                elements.append(Spacer(1, 0.06*inch))
         
         elements.append(Spacer(1, 0.1*inch))
         
@@ -485,14 +487,3 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         doc.build(elements)
         buffer.seek(0)
         return buffer
-        
-    except Exception as e:
-        # If PDF generation fails, return error info that can be logged
-        import traceback
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"PDF generation error: {str(e)}")
-        logger.error(traceback.format_exc())
-        
-        # Re-raise to let the view handle it properly
-        raise Exception(f"PDF generation failed: {str(e)}")
