@@ -646,13 +646,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 </Select>
               </div>
 
-              {/* Department Filter - Only for Admin and IT head, hidden for CS head */}
-              {(userRole === 'admin' || isITHead) && (
+              {/* Department Filter - Disabled for CS head, shown for Admin and IT head */}
+              {(userRole === 'admin' || isITHead || isCSHead) && (
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
                   <Select 
                     value={selectedDepartment} 
                     onValueChange={handleDepartmentChange}
+                    disabled={isCSHead}
                   >
                     <SelectTrigger id="department">
                       <SelectValue placeholder="Select Department" />
@@ -660,21 +661,25 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                     <SelectContent>
                       {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
                       {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
-                      {userRole === 'admin' && (
+                      {(userRole === 'admin' || isCSHead) && (
                         <SelectItem value="CS">Computer Science</SelectItem>
                       )}
-                      <SelectItem value="IT">Information Technology</SelectItem>
-                      <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
+                      {(userRole === 'admin' || isITHead) && (
+                        <SelectItem value="IT">Information Technology</SelectItem>
+                      )}
+                      {(userRole === 'admin' || isITHead) && (
+                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
-              {/* Instructor Filter - For Admin and IT head */}
-              {(userRole === 'admin' || isITHead) && (
+              {/* Instructor Filter - For Admin, IT head, and CS head */}
+              {(userRole === 'admin' || isITHead || isCSHead) && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="instructor">Instructor</Label>
+                    <Label htmlFor="instructor">{isCSHead ? 'Instructor (CS)' : 'Instructor'}</Label>
                     <Select value={instructorId} onValueChange={handleInstructorChange}>
                       <SelectTrigger id="instructor">
                         <SelectValue placeholder="All Instructors" />
@@ -691,49 +696,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="course">Course/Subject</Label>
+                    <Label htmlFor="course">{isCSHead ? 'Course/Subject (CS)' : 'Course/Subject'}</Label>
                     <Select value={courseId} onValueChange={setCourseId}>
                       <SelectTrigger id="course">
                         <SelectValue placeholder="All Courses" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Courses</SelectItem>
-                        {courses.map((course) => (
-                          <SelectItem key={course.id} value={course.id.toString()}>
-                            {course.code} - {course.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-
-              {/* Instructor and Course filters for CS head (no department filter) */}
-              {isCSHead && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="instructor">Instructor (CS Only)</Label>
-                    <Select value={instructorId} onValueChange={handleInstructorChange}>
-                      <SelectTrigger id="instructor">
-                        <SelectValue placeholder="All CS Instructors" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Instructors</SelectItem>
-                        {instructors.map((instructor) => (
-                          <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                            {instructor.display_name || `${instructor.first_name} ${instructor.last_name}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="course">Course/Subject (CS Only)</Label>
-                    <Select value={courseId} onValueChange={setCourseId}>
-                      <SelectTrigger id="course">
-                        <SelectValue placeholder="All CS Courses" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Courses</SelectItem>
