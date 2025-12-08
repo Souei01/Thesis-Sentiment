@@ -184,7 +184,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     if (userRole === 'admin' || isDepartmentHead) {
       fetchInstructors();
     }
-  }, [userRole, selectedDepartment, isDepartmentHead]);
+  }, [userRole, selectedDepartment, isDepartmentHead, isITHead, isCSHead]);
 
   // Fetch available years once
   useEffect(() => {
@@ -195,8 +195,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
 
   // Fetch courses when department or instructor changes
   useEffect(() => {
-    fetchCourses();
-  }, [selectedDepartment, instructorId]);
+    if (userRole === 'admin' || isDepartmentHead) {
+      fetchCourses();
+    }
+  }, [selectedDepartment, instructorId, isITHead, isCSHead, userRole, isDepartmentHead]);
 
   const fetchInstructors = async () => {
     try {
@@ -689,11 +691,16 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
+                      {/* CS Head - Only Computer Science */}
                       {isCSHead && <SelectItem value="CS">Computer Science</SelectItem>}
-                      {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
-                      {userRole === 'admin' && (
+                      
+                      {/* Admin - All options */}
+                      {userRole === 'admin' && !isITHead && !isCSHead && <SelectItem value="all">All Departments</SelectItem>}
+                      {userRole === 'admin' && !isITHead && !isCSHead && (
                         <SelectItem value="CS">Computer Science</SelectItem>
                       )}
+                      
+                      {/* IT Head - Only IT & ACT options */}
                       {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
                       {(userRole === 'admin' || isITHead) && (
                         <SelectItem value="IT">Information Technology</SelectItem>
