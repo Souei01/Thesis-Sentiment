@@ -162,6 +162,13 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   const [topicLoading, setTopicLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Set department to CS when CS head user is loaded
+  useEffect(() => {
+    if (isCSHead && selectedDepartment !== 'CS') {
+      setSelectedDepartment('CS');
+    }
+  }, [isCSHead]);
+
   // Fetch instructors when department changes
   useEffect(() => {
     if (userRole === 'admin' || isDepartmentHead) {
