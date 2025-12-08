@@ -13,6 +13,7 @@ import { RatingInput } from './RatingInput';
 import { YesNoInput } from './YesNoInput';
 import { FeedbackFormData, FORM_STEPS } from '@/types/feedback';
 import { saveFormProgress, getFormProgress, clearFormProgress } from '@/lib/formProgress';
+import { sanitizeTextInput, validateFeedbackComments } from '@/lib/sanitize';
 
 interface MultistepFeedbackFormProps {
   courseId: string;
@@ -258,8 +259,31 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
 
   const handleSubmit = () => {
     if (validateCurrentStep()) {
-      const completedData = { ...formData, completedAt: new Date() };
-      onSubmit(completedData);
+      // Validate and sanitize comments
+      const commentsValidation = validateFeedbackComments(formData.comments);
+      if (!commentsValidation.valid) {
+        setAlertDialog({
+          open: true,
+          title: 'Invalid Comments',
+          description: commentsValidation.message || 'Please provide meaningful feedback.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      // Sanitize text inputs before submission
+      const sanitizedData = {
+        ...formData,
+        comments: {
+          recommendedChanges: sanitizeTextInput(formData.comments.recommendedChanges, 1000),
+          likeBest: sanitizeTextInput(formData.comments.likeBest, 1000),
+          likeLeast: sanitizeTextInput(formData.comments.likeLeast, 1000),
+          additionalComments: sanitizeTextInput(formData.comments.additionalComments, 2000)
+        },
+        completedAt: new Date()
+      };
+      
+      onSubmit(sanitizedData);
       // Clear form progress from storage
       clearFormProgress(courseId);
     } else {
@@ -624,8 +648,10 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
                 onChange={(e) => updateFormData('comments', 'recommendedChanges', e.target.value)}
                 placeholder="Share your suggestions for improvement..."
                 rows={4}
+                maxLength={1000}
                 className="text-sm"
               />
+              <p className="text-xs text-gray-500">{formData.comments.recommendedChanges.length}/1000 characters</p>
             </div>
             <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs sm:text-sm font-medium text-gray-700">
@@ -636,8 +662,10 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
                 onChange={(e) => updateFormData('comments', 'likeBest', e.target.value)}
                 placeholder="What you appreciated most..."
                 rows={4}
+                maxLength={1000}
                 className="text-sm"
               />
+              <p className="text-xs text-gray-500">{formData.comments.likeBest.length}/1000 characters</p>
             </div>
             <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs sm:text-sm font-medium text-gray-700">
@@ -648,8 +676,10 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
                 onChange={(e) => updateFormData('comments', 'likeLeast', e.target.value)}
                 placeholder="Areas that could be improved..."
                 rows={4}
+                maxLength={1000}
                 className="text-sm"
               />
+              <p className="text-xs text-gray-500">{formData.comments.likeLeast.length}/1000 characters</p>
             </div>
             <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs sm:text-sm font-medium text-gray-700">
@@ -660,8 +690,10 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
                 onChange={(e) => updateFormData('comments', 'additionalComments', e.target.value)}
                 placeholder="Additional feedback..."
                 rows={4}
+                maxLength={2000}
                 className="text-sm"
               />
+              <p className="text-xs text-gray-500">{formData.comments.additionalComments.length}/2000 characters</p>
             </div>
           </div>
         );

@@ -256,6 +256,9 @@ def submit_feedback(request):
         if not text:
             return ''
         
+        # Convert to string if not already
+        text = str(text)
+        
         # Strip whitespace
         text = text.strip()
         
@@ -266,6 +269,15 @@ def submit_feedback(request):
         # HTML escape to prevent XSS
         from html import escape
         text = escape(text)
+        
+        # Additional security: Remove any potential script tags or event handlers
+        # This is redundant after escape() but adds extra safety
+        import re
+        # Remove any remaining angle brackets that might have slipped through
+        text = re.sub(r'[<>]', '', text)
+        
+        # Remove null bytes
+        text = text.replace('\x00', '')
         
         return text
     
