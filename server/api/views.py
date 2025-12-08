@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.db.models import Avg, Count, Q
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 import pandas as pd
@@ -1620,6 +1620,7 @@ def get_response_stats(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])  # Allow unauthenticated access for word cloud
 def get_sentiment_words(request):
     """
     Load positive and negative word lists from text files
@@ -1629,27 +1630,41 @@ def get_sentiment_words(request):
     try:
         base_path = Path(__file__).parent.parent / 'data' / 'annotations'
         
+        logger.info(f"Loading sentiment words from: {base_path}")
+        
         # Load positive words
         positive_file = base_path / 'positive-words.txt'
         positive_words = []
         if positive_file.exists():
             with open(positive_file, 'r', encoding='utf-8', errors='ignore') as f:
-                positive_words = [line.strip() for line in f if line.strip()]
+                positive_words = [line.strip() for line in f if line.strip() and not line.startswith(';')]
+            logger.info(f"Loaded {len(positive_words)} positive words")
+        else:
+            logger.error(f"Positive words file not found: {positive_file}")
         
         # Load negative words
         negative_file = base_path / 'negative-words.txt'
         negative_words = []
         if negative_file.exists():
             with open(negative_file, 'r', encoding='utf-8', errors='ignore') as f:
-                negative_words = [line.strip() for line in f if line.strip()]
+                negative_words = [line.strip() for line in f if line.strip() and not line.startswith(';')]
+            logger.info(f"Loaded {len(negative_words)} negative words")
+        else:
+            logger.error(f"Negative words file not found: {negative_file}")
         
         return Response({
             'positive': positive_words,
-            'negative': negative_words
+            'negative': negative_words,
+            'count': {
+                'positive': len(positive_words),
+                'negative': len(negative_words)
+            }
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
         logger.error(f"Error loading sentiment words: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return Response({
             'error': 'Failed to load sentiment words',
             'positive': [],
