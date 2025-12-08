@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -410,7 +410,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     { subject: 'Feedback', value: analytics.feedback_assessment?.clear_communication || 0 },
   ];
 
-  const sentimentData = useMemo(() => {
+  // Calculate sentiment data (no useMemo to avoid dependency loops)
+  const getSentimentData = () => {
     if (!analytics) {
       return { positive: 0, neutral: 0, negative: 0 };
     }
@@ -436,13 +437,15 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
       else acc.neutral++;
       return acc;
     }, { positive: 0, neutral: 0, negative: 0 });
-  }, [emotionData, analytics]);
+  };
 
-  const sentimentDistributionData = useMemo(() => [
+  const sentimentData = getSentimentData();
+
+  const sentimentDistributionData = [
     { name: 'Positive', value: sentimentData.positive, color: '#22c55e' },
     { name: 'Neutral', value: sentimentData.neutral, color: '#eab308' },
     { name: 'Negative', value: sentimentData.negative, color: '#ef4444' },
-  ], [sentimentData]);
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
