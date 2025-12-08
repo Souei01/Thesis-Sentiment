@@ -408,13 +408,15 @@ def submit_feedback(request):
     # Trigger topic modeling after every 5 new feedbacks
     try:
         total_feedbacks = Feedback.objects.filter(status='submitted').count()
+        logger.info(f"📊 Total submitted feedbacks: {total_feedbacks}")
         
         # Check if we should run topic modeling
         # Run if: at 10 feedbacks OR multiple of 5 feedbacks after 10
         should_run = (total_feedbacks == 10) or (total_feedbacks > 10 and total_feedbacks % 5 == 0)
+        logger.info(f"🤔 Should run topic modeling? {should_run} (total={total_feedbacks})")
         
         if should_run:
-            logger.info(f"Triggering topic modeling task ({total_feedbacks} feedbacks)...")
+            logger.info(f"🚀 TRIGGERING topic modeling task ({total_feedbacks} feedbacks)...")
             
             # Run asynchronously in background
             from threading import Thread
@@ -424,20 +426,37 @@ def submit_feedback(request):
             
             def run_topic_modeling_background():
                 try:
+                    logger.info("🔧 Starting topic modeling background task...")
                     python_exe = sys.executable
                     script_path = Path(__file__).parent.parent / 'run_topic_modeling_task.py'
-                    subprocess.Popen(
-                        [python_exe, str(script_path)],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        cwd=Path(__file__).parent.parent
-                    )
-                    logger.info("✅ Topic modeling task started in background")
+                    
+                    logger.info(f"📁 Script path: {script_path}")
+                    logger.info(f"🐍 Python exe: {python_exe}")
+                    
+                    # Ensure results directory exists
+                    results_dir = Path(__file__).parent.parent / 'results' / 'topic_modeling'
+                    results_dir.mkdir(parents=True, exist_ok=True)
+                    logger.info(f"📂 Results dir created: {results_dir}")
+                    
+                    # Run with output to file for debugging
+                    log_file = results_dir / 'topic_modeling_log.txt'
+                    with open(log_file, 'a') as f:
+                        f.write(f"\n\n=== Started at {datetime.now().isoformat()} ===\n")
+                        process = subprocess.Popen(
+                            [python_exe, str(script_path)],
+                            stdout=f,
+                            stderr=f,
+                            cwd=Path(__file__).parent.parent
+                        )
+                    logger.info(f"✅ Topic modeling task started (PID: {process.pid}), check {log_file}")
                 except Exception as e:
-                    logger.error(f"Failed to start topic modeling: {str(e)}")
+                    logger.error(f"❌ Failed to start topic modeling: {str(e)}")
+                    import traceback
+                    logger.error(traceback.format_exc())
             
             # Start in separate thread to not block response
             Thread(target=run_topic_modeling_background, daemon=True).start()
+            logger.info("🧵 Background thread started")
     
     except Exception as e:
         # Don't fail feedback submission if topic modeling fails
