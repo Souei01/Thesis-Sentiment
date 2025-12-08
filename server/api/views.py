@@ -262,19 +262,30 @@ def submit_feedback(request):
         # Strip whitespace
         text = text.strip()
         
+        # Check for malicious patterns and REJECT if found
+        import re
+        malicious_patterns = [
+            r'<script[^>]*>',  # Script tags
+            r'javascript:',     # JavaScript protocol
+            r'on\w+\s*=',      # Event handlers (onclick, onerror, etc.)
+            r'<iframe[^>]*>',  # Iframes
+            r'<object[^>]*>',  # Object tags
+            r'<embed[^>]*>',   # Embed tags
+            r'eval\s*\(',      # eval() function
+            r'expression\s*\(',  # CSS expressions
+        ]
+        
+        for pattern in malicious_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                raise ValueError(f"Input contains potentially malicious content and has been rejected for security reasons.")
+        
         # Enforce maximum length
         if len(text) > max_length:
             text = text[:max_length]
         
-        # HTML escape to prevent XSS
+        # HTML escape to prevent XSS (as additional safety layer)
         from html import escape
         text = escape(text)
-        
-        # Additional security: Remove any potential script tags or event handlers
-        # This is redundant after escape() but adds extra safety
-        import re
-        # Remove any remaining angle brackets that might have slipped through
-        text = re.sub(r'[<>]', '', text)
         
         # Remove null bytes
         text = text.replace('\x00', '')
@@ -282,24 +293,31 @@ def submit_feedback(request):
         return text
     
     # Extract and sanitize text feedback for emotion analysis
-    text_feedback = {
-        'suggested_changes': sanitize_text_input(
-            feedback_data.get('comments', {}).get('recommendedChanges', ''), 
-            max_length=1000
-        ),
-        'best_teaching_aspect': sanitize_text_input(
-            feedback_data.get('comments', {}).get('likeBest', ''), 
-            max_length=1000
-        ),
-        'least_teaching_aspect': sanitize_text_input(
-            feedback_data.get('comments', {}).get('likeLeast', ''), 
-            max_length=1000
-        ),
-        'further_comments': sanitize_text_input(
-            feedback_data.get('comments', {}).get('additionalComments', ''), 
-            max_length=2000
-        ),
-    }
+    try:
+        text_feedback = {
+            'suggested_changes': sanitize_text_input(
+                feedback_data.get('comments', {}).get('recommendedChanges', ''), 
+                max_length=1000
+            ),
+            'best_teaching_aspect': sanitize_text_input(
+                feedback_data.get('comments', {}).get('likeBest', ''), 
+                max_length=1000
+            ),
+            'least_teaching_aspect': sanitize_text_input(
+                feedback_data.get('comments', {}).get('likeLeast', ''), 
+                max_length=1000
+            ),
+            'further_comments': sanitize_text_input(
+                feedback_data.get('comments', {}).get('additionalComments', ''), 
+                max_length=2000
+            ),
+        }
+    except ValueError as e:
+        logger.warning(f"Malicious input detected from user {user.email}: {str(e)}")
+        return Response(
+            {'error': 'Your feedback contains potentially harmful content and cannot be submitted. Please remove any script tags or JavaScript code.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
     # Validate rating values to ensure they're within acceptable range (1-5)
     def validate_rating(value, default=3):
