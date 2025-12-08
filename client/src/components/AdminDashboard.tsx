@@ -202,67 +202,101 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
 
   const fetchInstructors = async () => {
     try {
-      const params = new URLSearchParams({ role: 'faculty' });
+      console.log('🔍 Fetching instructors START');
+      console.log('  - isITHead:', isITHead);
+      console.log('  - isCSHead:', isCSHead);
+      console.log('  - isDepartmentHead:', isDepartmentHead);
+      console.log('  - selectedDepartment:', selectedDepartment);
+      console.log('  - userRole:', userRole);
       
-      console.log('🔍 Fetching instructors - isITHead:', isITHead, 'selectedDepartment:', selectedDepartment);
+      const params = new URLSearchParams({ role: 'faculty' });
       
       // Filter by department based on user role
       if (isCSHead) {
         // CS head can only see CS instructors
+        console.log('  - Mode: CS Head');
         params.append('department', 'CS');
       } else if (isITHead) {
         // IT head can see IT or ACT instructors based on selected department
+        console.log('  - Mode: IT Head');
         if (selectedDepartment && selectedDepartment !== 'all') {
+          console.log('  - Filtering by specific dept:', selectedDepartment);
           params.append('department', selectedDepartment);
         } else {
           // If "all" selected for IT head, show IT and ACT (handled by backend)
+          console.log('  - Fetching IT+ACT instructors');
           params.append('department', 'IT,ACT');
         }
       } else if (selectedDepartment && selectedDepartment !== 'all') {
         // Admin can filter by any department
+        console.log('  - Mode: Admin with dept filter');
         params.append('department', selectedDepartment);
+      } else {
+        console.log('  - Mode: Admin without filter');
       }
       
-      console.log('📡 API call params:', params.toString());
+      console.log('📡 API call URL:', `/auth/users/?${params.toString()}`);
       const response = await axiosInstance.get(`/auth/users/?${params.toString()}`);
-      console.log('✅ Instructors received:', response.data.data?.length || response.data?.length || 0);
-      setInstructors(response.data.data || response.data);
+      console.log('✅ Full response:', response.data);
+      console.log('✅ Instructors array:', response.data.data || response.data);
+      console.log('✅ Instructors count:', (response.data.data || response.data)?.length || 0);
+      
+      const instructorsList = response.data.data || response.data;
+      setInstructors(Array.isArray(instructorsList) ? instructorsList : []);
     } catch (error) {
-      console.error('Error fetching instructors:', error);
+      console.error('❌ Error fetching instructors:', error);
+      setInstructors([]);
     }
   };
 
   const fetchCourses = async () => {
     try {
-      const params = new URLSearchParams();
+      console.log('📚 Fetching courses START');
+      console.log('  - isITHead:', isITHead);
+      console.log('  - isCSHead:', isCSHead);
+      console.log('  - selectedDepartment:', selectedDepartment);
+      console.log('  - instructorId:', instructorId);
       
-      console.log('📚 Fetching courses - isITHead:', isITHead, 'selectedDepartment:', selectedDepartment);
+      const params = new URLSearchParams();
       
       // Filter by department based on user role
       if (isCSHead) {
         // CS head can only see CS courses
+        console.log('  - Mode: CS Head');
         params.append('department', 'CS');
       } else if (isITHead) {
         // IT head can see IT or ACT courses based on selected department
+        console.log('  - Mode: IT Head');
         if (selectedDepartment && selectedDepartment !== 'all') {
+          console.log('  - Filtering by specific dept:', selectedDepartment);
           params.append('department', selectedDepartment);
         } else {
           // If "all" selected for IT head, show IT and ACT
+          console.log('  - Fetching IT+ACT courses');
           params.append('department', 'IT,ACT');
         }
       } else if (selectedDepartment && selectedDepartment !== 'all') {
         // Admin can filter by any department
+        console.log('  - Mode: Admin with dept filter');
         params.append('department', selectedDepartment);
+      } else {
+        console.log('  - Mode: Admin without filter');
       }
       
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (instructorId && instructorId !== 'all') {
+        console.log('  - Filtering by instructor:', instructorId);
+        params.append('instructor_id', instructorId);
+      }
       
-      console.log('📡 Courses API call params:', params.toString());
+      console.log('📡 Courses API URL:', `/feedback/courses/?${params.toString()}`);
       const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
-      console.log('✅ Courses received:', response.data.courses?.length || 0);
-      setCourses(response.data.courses || []);
+      console.log('✅ Full courses response:', response.data);
+      console.log('✅ Courses array:', response.data.courses);
+      console.log('✅ Courses count:', response.data.courses?.length || 0);
+      
+      setCourses(Array.isArray(response.data.courses) ? response.data.courses : []);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('❌ Error fetching courses:', error);
       setCourses([]);
     }
   };
