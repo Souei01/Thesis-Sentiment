@@ -19,13 +19,17 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
     const loadSentimentWords = async () => {
       try {
         const response = await axiosInstance.get('/feedback/sentiment-words/');
+        console.log('API Response:', response.data);
+        
         const positive = new Set(response.data.positive || []);
         const negative = new Set(response.data.negative || []);
         
         console.log('Loaded sentiment words:', {
           positiveCount: positive.size,
           negativeCount: negative.size,
-          hasBest: positive.has('best')
+          hasBest: positive.has('best'),
+          firstFewPositive: Array.from(positive).slice(0, 10),
+          firstFewNegative: Array.from(negative).slice(0, 10)
         });
         
         setPositiveWords(positive);
@@ -33,14 +37,17 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
       } catch (error) {
         console.error('Error loading sentiment words:', error);
         // Fallback to basic word lists if API fails
-        setPositiveWords(new Set([
+        const fallbackPositive = new Set([
           'excellent', 'great', 'good', 'best', 'better', 'amazing', 'wonderful', 'fantastic',
           'helpful', 'clear', 'engaging', 'knowledgeable', 'patient', 'passionate', 'approachable',
-        ]));
-        setNegativeWords(new Set([
+        ]);
+        const fallbackNegative = new Set([
           'difficult', 'hard', 'poor', 'bad', 'worst', 'confusing', 'unclear', 'boring',
           'slow', 'fast', 'rushed', 'limited', 'lack', 'insufficient', 'inadequate',
-        ]));
+        ]);
+        console.log('Using fallback word lists');
+        setPositiveWords(fallbackPositive);
+        setNegativeWords(fallbackNegative);
       } finally {
         setLoading(false);
       }
