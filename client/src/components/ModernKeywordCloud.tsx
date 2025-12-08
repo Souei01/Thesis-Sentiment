@@ -25,8 +25,8 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         
         // Use API data if available, otherwise fallback
         if (response.data.positive && response.data.positive.length > 0) {
-          const positive = new Set(response.data.positive || []);
-          const negative = new Set(response.data.negative || []);
+          const positive = new Set<string>(response.data.positive || []);
+          const negative = new Set<string>(response.data.negative || []);
           
           console.log('Using API word lists:', {
             positiveCount: positive.size,
