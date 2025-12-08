@@ -22,33 +22,38 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         console.log('=== API Response ===');
         console.log('Positive words count:', response.data.positive?.length);
         console.log('Negative words count:', response.data.negative?.length);
-        console.log('First 10 positive:', response.data.positive?.slice(0, 10));
-        console.log('First 10 negative:', response.data.negative?.slice(0, 10));
         
-        const positive = new Set(response.data.positive || []);
-        const negative = new Set(response.data.negative || []);
-        
-        console.log('=== After creating Sets ===');
-        console.log('Positive Set size:', positive.size);
-        console.log('Negative Set size:', negative.size);
-        console.log('Has "best":', positive.has('best'));
-        console.log('Has "good":', positive.has('good'));
-        console.log('Has "great":', positive.has('great'));
-        
-        setPositiveWords(positive);
-        setNegativeWords(negative);
+        // Use API data if available, otherwise fallback
+        if (response.data.positive && response.data.positive.length > 0) {
+          const positive = new Set(response.data.positive || []);
+          const negative = new Set(response.data.negative || []);
+          
+          console.log('Using API word lists:', {
+            positiveCount: positive.size,
+            negativeCount: negative.size,
+            hasBest: positive.has('best')
+          });
+          
+          setPositiveWords(positive);
+          setNegativeWords(negative);
+        } else {
+          console.warn('API returned empty arrays, using fallback word lists');
+          throw new Error('Empty word lists from API');
+        }
       } catch (error) {
-        console.error('Error loading sentiment words:', error);
-        // Fallback to basic word lists if API fails
+        console.error('Error loading sentiment words, using fallback:', error);
+        // Fallback to basic word lists if API fails or returns empty
         const fallbackPositive = new Set([
           'excellent', 'great', 'good', 'best', 'better', 'amazing', 'wonderful', 'fantastic',
           'helpful', 'clear', 'engaging', 'knowledgeable', 'patient', 'passionate', 'approachable',
+          'effective', 'organized', 'thorough', 'understanding', 'supportive', 'dedicated',
         ]);
         const fallbackNegative = new Set([
           'difficult', 'hard', 'poor', 'bad', 'worst', 'confusing', 'unclear', 'boring',
           'slow', 'fast', 'rushed', 'limited', 'lack', 'insufficient', 'inadequate',
+          'disorganized', 'unprepared', 'unfair', 'harsh', 'rude',
         ]);
-        console.log('Using fallback word lists');
+        console.log('✅ Using fallback - Positive:', fallbackPositive.size, 'Negative:', fallbackNegative.size);
         setPositiveWords(fallbackPositive);
         setNegativeWords(fallbackNegative);
       } finally {

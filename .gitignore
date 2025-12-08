@@ -69,6 +69,8 @@ server/csv_exports/*.txt
 !requirements.txt
 !server/data/annotations/train_data.csv
 !server/data/annotations/test_data.csv
+!server/data/annotations/positive-words.txt
+!server/data/annotations/negative-words.txt
 
 # Node.js / Next.js
 node_modules/
