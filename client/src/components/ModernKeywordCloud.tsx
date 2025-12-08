@@ -100,6 +100,17 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
       const wordArray = Object.entries(wordFrequency)
         .map(([text, count]) => {
           let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+          
+          // Debug logging for specific words
+          if (text === 'best' || text === 'good' || text === 'great') {
+            console.log(`Checking word "${text}":`, {
+              inPositive: positiveWords.has(text),
+              inNegative: negativeWords.has(text),
+              positiveWordsSize: positiveWords.size,
+              negativeWordsSize: negativeWords.size
+            });
+          }
+          
           if (positiveWords.has(text)) {
             sentiment = 'positive';
           } else if (negativeWords.has(text)) {
@@ -109,6 +120,8 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         })
         .sort((a, b) => b.count - a.count)
         .slice(0, 30);
+      
+      console.log('Final keywords with sentiment:', wordArray.filter(w => ['best', 'good', 'great'].includes(w.text)));
       
       return wordArray;
     } catch (error) {
