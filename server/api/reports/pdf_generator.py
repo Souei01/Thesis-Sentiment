@@ -17,17 +17,18 @@ from django.db.models import Avg, Count, Q
 
 def generate_feedback_report_pdf(feedback_qs, filters, user):
     """Generate a comprehensive PDF report for feedback data"""
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, 
-        pagesize=letter, 
-        topMargin=0.5*inch, 
-        bottomMargin=0.5*inch,
-        leftMargin=0.75*inch,
-        rightMargin=0.75*inch
-    )
-    elements = []
-    styles = getSampleStyleSheet()
+    try:
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=letter, 
+            topMargin=0.5*inch, 
+            bottomMargin=0.5*inch,
+            leftMargin=0.75*inch,
+            rightMargin=0.75*inch
+        )
+        elements = []
+        styles = getSampleStyleSheet()
     
     # Custom styles
     title_style = ParagraphStyle(
@@ -471,3 +472,19 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
         doc.build(elements)
         buffer.seek(0)
         return buffer
+        
+    except Exception as e:
+        # If PDF generation fails, create a simple error report
+        import traceback
+        error_buffer = BytesIO()
+        error_doc = SimpleDocTemplate(error_buffer, pagesize=letter)
+        error_elements = []
+        error_styles = getSampleStyleSheet()
+        
+        error_elements.append(Paragraph("Error Generating Report", error_styles['Heading1']))
+        error_elements.append(Paragraph(f"An error occurred: {str(e)}", error_styles['Normal']))
+        error_elements.append(Paragraph(f"Traceback: {traceback.format_exc()}", error_styles['Normal']))
+        
+        error_doc.build(error_elements)
+        error_buffer.seek(0)
+        return error_buffer

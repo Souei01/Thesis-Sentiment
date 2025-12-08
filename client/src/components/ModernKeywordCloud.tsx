@@ -101,6 +101,12 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just',
         'about', 'also', 'any', 'because', 'even', 'however', 'if', 'into',
         'like', 'made', 'make', 'much', 'over', 'through', 'up', 'using', 'want',
+        // Faculty names and variations (case-insensitive)
+        'salimar', 'salih', 'sal', 'sir', 'maam', 'ma\'am', 'mr', 'mrs', 'ms',
+        'jaydee', 'ballaho', 'lucy', 'felix', 'sadiwa', 'odon', 'maravilla',
+        'arip', 'chris', 'sherard', 'lines', 'marjory', 'rojas', 'marj',
+        'rhamirl', 'jaafar', 'rham', 'ram', 'jlo', 'edios', 'jaylo',
+        'mark', 'flores', 'yara', 'professor', 'prof', 'teacher', 'instructor',
       ]);
 
       const wordFrequency: Record<string, number> = {};

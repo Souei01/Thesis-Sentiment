@@ -72,7 +72,18 @@ print(f'Total feedback entries: {len(all_feedback)}')
 def preprocess_for_topics(text):
     """Clean text for topic modeling"""
     text = str(text).lower()
-    words = [w for w in text.split() if len(w) > 3 and not w.isdigit()]
+    
+    # Faculty names to filter out (all variations)
+    faculty_names = {
+        'salimar', 'salih', 'sal', 'sir', 'maam', "ma'am", 'mr', 'mrs', 'ms',
+        'jaydee', 'ballaho', 'lucy', 'felix', 'sadiwa', 'odon', 'maravilla',
+        'arip', 'chris', 'sherard', 'lines', 'marjory', 'rojas', 'marj',
+        'rhamirl', 'jaafar', 'rham', 'ram', 'jlo', 'edios', 'jaylo',
+        'mark', 'flores', 'yara', 'professor', 'prof', 'teacher', 'instructor'
+    }
+    
+    words = [w for w in text.split() 
+             if len(w) > 3 and not w.isdigit() and w not in faculty_names]
     return ' '.join(words)
 
 all_feedback['cleaned_text'] = all_feedback['feedback'].apply(preprocess_for_topics)
