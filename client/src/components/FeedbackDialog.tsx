@@ -20,17 +20,25 @@ export default function FeedbackDialog({
   onSubmit,
 }: FeedbackDialogProps) {
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (data: FeedbackFormData) => {
+  const handleSubmit = async (data: FeedbackFormData) => {
     if (course) {
-      onSubmit(course.id, data);
-      setShowSuccess(true);
-      
-      // Show success message then close
-      setTimeout(() => {
-        setShowSuccess(false);
-        onOpenChange(false);
-      }, 2000);
+      try {
+        setError(null);
+        await onSubmit(course.id, data);
+        setShowSuccess(true);
+        
+        // Show success message then close
+        setTimeout(() => {
+          setShowSuccess(false);
+          onOpenChange(false);
+        }, 2000);
+      } catch (err: any) {
+        console.error('Submission error:', err);
+        const errorMessage = err.response?.data?.error || 'Failed to submit feedback. Please try again.';
+        setError(errorMessage);
+      }
     }
   };
 
@@ -66,6 +74,7 @@ export default function FeedbackDialog({
       instructor={course.instructor}
       onSubmit={handleSubmit}
       onClose={() => onOpenChange(false)}
+      serverError={error}
     />
   );
 }

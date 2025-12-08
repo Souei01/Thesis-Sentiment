@@ -22,6 +22,7 @@ interface MultistepFeedbackFormProps {
   instructor?: string;
   onSubmit: (data: FeedbackFormData) => void;
   onClose: () => void;
+  serverError?: string | null;
 }
 
 const getInitialFormData = (courseId: string): FeedbackFormData => ({
@@ -92,7 +93,8 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
   courseCode,
   instructor,
   onSubmit,
-  onClose
+  onClose,
+  serverError
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [alertDialog, setAlertDialog] = useState<{ open: boolean; title: string; description: string; type: 'error' | 'warning' | 'info' }>({ 
@@ -723,6 +725,14 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
 
         {/* Progress Bar */}
         <ProgressBar currentStep={currentStep} />
+
+        {/* Server Error Display */}
+        {serverError && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-800 font-medium">⚠️ Submission Failed</p>
+            <p className="text-sm text-red-700 mt-1">{serverError}</p>
+          </div>
+        )}
 
         {/* Form Content */}
         <div className="min-h-[300px] sm:min-h-[500px] mb-6 sm:mb-8">

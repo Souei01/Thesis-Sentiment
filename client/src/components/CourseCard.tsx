@@ -56,11 +56,11 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-lg flex flex-col h-full",
-      course.color === 'pink' && "bg-pink-50 border-pink-200",
-      course.color === 'blue' && "bg-blue-50 border-blue-200",
-      course.color === 'yellow' && "bg-yellow-50 border-yellow-200",
-      course.color === 'green' && "bg-green-50 border-green-200"
+      "overflow-hidden transition-all hover:shadow-md flex flex-col h-full border",
+      course.color === 'pink' && "bg-white border-gray-200",
+      course.color === 'blue' && "bg-white border-gray-200",
+      course.color === 'yellow' && "bg-white border-gray-200",
+      course.color === 'green' && "bg-white border-gray-200"
     )}>
       <CardHeader className="pb-3">
         {/* Tag and Semester Badge with fixed height to maintain alignment */}
@@ -71,24 +71,24 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
             </span>
           )}
           {course.semester && (
-            <span className="text-xs font-medium px-2 py-1 rounded bg-purple-100 text-purple-800 border border-purple-200">
+            <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 text-gray-700 border border-gray-200">
               {course.semester}
             </span>
           )}
         </div>
         
         <div className="flex items-start gap-4">
-          <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0", bgColorClass)}>
+          <div className={cn("w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-100 border border-gray-200")}>
             {course.avatar ? (
               <div className="text-3xl">{course.avatar}</div>
             ) : (
-              <BookOpen className="w-8 h-8 text-gray-600" />
+              <BookOpen className="w-8 h-8 text-gray-500" />
             )}
           </div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-base text-gray-900 line-clamp-1">{course.code}</h3>
-            <p className="text-sm font-medium text-gray-700 mt-0.5 line-clamp-2">
+            <h3 className="font-semibold text-base text-gray-900 line-clamp-1">{course.code}</h3>
+            <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
               {course.name}
             </p>
           </div>
@@ -96,11 +96,17 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
       </CardHeader>
 
       <CardContent className="pb-3 flex-grow">
-        {/* Description with fixed height and tooltip */}
+        {/* Description with fixed height and ellipsis */}
         <div className="mb-3">
           <p 
-            className="text-xs text-gray-600 line-clamp-3 h-[3.6rem]" 
+            className="text-xs text-gray-500 line-clamp-3 h-[3.6rem] overflow-hidden text-ellipsis" 
             title={course.description || 'No description available'}
+            style={{ 
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
           >
             {course.description || 'No description available'}
           </p>
@@ -108,12 +114,12 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
 
         {/* Due date prominently displayed with colored background */}
         {course.dueDate && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-red-600" />
+              <Calendar className="w-4 h-4 text-gray-600" />
               <div className="flex-1">
-                <p className="text-xs font-medium text-red-900">Due Date</p>
-                <p className="text-sm font-bold text-red-600">{course.dueDate}</p>
+                <p className="text-xs font-medium text-gray-600">Due Date</p>
+                <p className="text-sm font-semibold text-gray-900">{course.dueDate}</p>
               </div>
             </div>
           </div>
@@ -126,11 +132,11 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Feedback Progress</span>
-                <span className="font-semibold text-[#8E1B1B]">{feedbackProgress}%</span>
+                <span className="font-medium text-gray-900">{feedbackProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-[#8E1B1B] h-2 rounded-full transition-all"
+                  className="bg-gray-900 h-2 rounded-full transition-all"
                   style={{ width: `${feedbackProgress}%` }}
                 />
               </div>
@@ -142,11 +148,11 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Status</span>
-                <span className="font-semibold text-green-600">Completed</span>
+                <span className="font-medium text-gray-900">Completed</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-green-600 h-2 rounded-full transition-all"
+                  className="bg-gray-900 h-2 rounded-full transition-all"
                   style={{ width: '100%' }}
                 />
               </div>
