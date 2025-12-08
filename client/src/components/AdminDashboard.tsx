@@ -148,6 +148,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   console.log('Is Department Head:', isDepartmentHead);
   console.log('Email Department:', emailDepartment);
   console.log('User Department:', userDepartment);
+  console.log('Is IT Head:', isITHead);
+  console.log('Is CS Head:', isCSHead);
+  console.log('User Role:', userRole);
   
   // IT head can filter IT and ACT, CS head can only see CS
   const isITHead = isDepartmentHead && userDepartment === 'IT';
@@ -199,6 +202,8 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     try {
       const params = new URLSearchParams({ role: 'faculty' });
       
+      console.log('🔍 Fetching instructors - isITHead:', isITHead, 'selectedDepartment:', selectedDepartment);
+      
       // Filter by department based on user role
       if (isCSHead) {
         // CS head can only see CS instructors
@@ -216,7 +221,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
         params.append('department', selectedDepartment);
       }
       
+      console.log('📡 API call params:', params.toString());
       const response = await axiosInstance.get(`/auth/users/?${params.toString()}`);
+      console.log('✅ Instructors received:', response.data.data?.length || response.data?.length || 0);
       setInstructors(response.data.data || response.data);
     } catch (error) {
       console.error('Error fetching instructors:', error);
@@ -226,6 +233,8 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   const fetchCourses = async () => {
     try {
       const params = new URLSearchParams();
+      
+      console.log('📚 Fetching courses - isITHead:', isITHead, 'selectedDepartment:', selectedDepartment);
       
       // Filter by department based on user role
       if (isCSHead) {
@@ -246,7 +255,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       
       if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
       
+      console.log('📡 Courses API call params:', params.toString());
       const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
+      console.log('✅ Courses received:', response.data.courses?.length || 0);
       setCourses(response.data.courses || []);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -680,10 +691,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                     <SelectContent>
                       {isCSHead && <SelectItem value="CS">Computer Science</SelectItem>}
                       {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
-                      {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
                       {userRole === 'admin' && (
                         <SelectItem value="CS">Computer Science</SelectItem>
                       )}
+                      {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
                       {(userRole === 'admin' || isITHead) && (
                         <SelectItem value="IT">Information Technology</SelectItem>
                       )}
