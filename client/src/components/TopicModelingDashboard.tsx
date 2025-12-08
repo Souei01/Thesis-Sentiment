@@ -276,9 +276,6 @@ export default function TopicModelingDashboard({ topics, topicDistribution, tota
               <Lightbulb className="h-5 w-5 text-[#8E1B1B]" />
               Course Improvement Insights
             </CardTitle>
-            <CardDescription>
-              AI-generated recommendations based on topic analysis and student emotions
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">

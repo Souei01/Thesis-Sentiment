@@ -968,10 +968,12 @@ def generate_topic_insights(keywords, emotion_dist=None):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_topic_modeling_data(request):
-    """Get topic modeling data from CSV results with LDA-generated insights"""
+    """Get topic modeling data with filtering support"""
     import pandas as pd
     import json
     from pathlib import Path
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.decomposition import LatentDirichletAllocation
     
     user = request.user
     
@@ -982,60 +984,186 @@ def get_topic_modeling_data(request):
         )
     
     try:
-        # Load topic modeling results
-        base_path = Path(__file__).parent.parent / 'results' / 'topic_modeling'
-        topics_file = base_path / 'topics_keywords.csv'
-        feedback_file = base_path / 'feedback_with_topics.csv'
-        insights_file = base_path / 'lda_insights.json'
+        # Get filter parameters
+        instructor_id = request.GET.get('instructor_id')
+        course_id = request.GET.get('course_id')
+        department = request.GET.get('department')
+        semester = request.GET.get('semester')
+        academic_year = request.GET.get('academic_year')
         
-        if not topics_file.exists():
+        # Start with all submitted feedbacks
+        feedbacks = Feedback.objects.filter(status='submitted')
+        
+        # Apply filters
+        if instructor_id and instructor_id != 'all':
+            feedbacks = feedbacks.filter(
+                course_assignment__instructor__id=instructor_id
+            )
+        
+        if course_id and course_id != 'all':
+            feedbacks = feedbacks.filter(course_assignment__course__id=course_id)
+        
+        if department and department != 'all':
+            feedbacks = feedbacks.filter(course_assignment__course__department=department)
+        
+        if semester and semester != 'all':
+            feedbacks = feedbacks.filter(course_assignment__semester=semester)
+        
+        if academic_year and academic_year != 'all':
+            feedbacks = feedbacks.filter(course_assignment__academic_year=academic_year)
+        
+        # Check if we have enough data
+        if feedbacks.count() < 10:
             return Response({
-                'error': 'Topic modeling data not found. Please run topic modeling first.'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Load topics and keywords
-        topics_df = pd.read_csv(topics_file)
-        topics_data = []
-        for _, row in topics_df.iterrows():
-            keywords = row['Keywords'].split(', ')[:10]  # Top 10 keywords
-            topics_data.append({
-                'topic': row['Topic'],
-                'keywords': keywords
+                'error': f'Need at least 10 feedbacks for topic modeling. Currently have {feedbacks.count()}.',
+                'topics': [],
+                'topic_distribution': {},
+                'total_topics': 0
             })
         
-        # Load feedback with topics if available
-        topic_distribution = {}
-        topic_emotion_dist = {}
-        topic_insights = []
-        
-        if feedback_file.exists():
-            feedback_df = pd.read_csv(feedback_file)
+        # Combine all text feedback fields
+        feedback_data = []
+        for fb in feedbacks:
+            combined_text = ' '.join(filter(None, [
+                fb.suggested_changes or '',
+                fb.best_teaching_aspect or '',
+                fb.least_teaching_aspect or '',
+                fb.further_comments or ''
+            ]))
             
-            # Topic distribution
-            topic_counts = feedback_df['dominant_topic'].value_counts().to_dict()
-            topic_distribution = {f'Topic {k+1}': v for k, v in topic_counts.items()}
-            
-            # Topic-emotion distribution (if emotion labels exist)
-            if 'label' in feedback_df.columns:
-                topic_emotion = feedback_df.groupby(['dominant_topic', 'label']).size().unstack(fill_value=0)
-                topic_emotion_dist = topic_emotion.to_dict('index')
-                topic_emotion_dist = {f'Topic {k+1}': v for k, v in topic_emotion_dist.items()}
-        
-        # Load LDA-generated insights if available
-        if insights_file.exists():
-            with open(insights_file, 'r') as f:
-                lda_insights_data = json.load(f)
-                topic_insights = lda_insights_data.get('topics', [])
-        else:
-            # Fallback: Generate basic insights using rule-based system
-            logger.warning("LDA insights not found, using fallback rule-based generation")
-            for idx, topic_data in enumerate(topics_data):
-                emotion_dist = topic_emotion_dist.get(f'Topic {idx+1}', {})
-                insights = generate_topic_insights(topic_data['keywords'], emotion_dist)
-                topic_insights.append({
-                    'topic': topic_data['topic'],
-                    'insights': insights
+            if combined_text.strip():
+                # Get dominant emotion
+                emotions = []
+                if fb.emotion_suggested_changes:
+                    emotions.append(fb.emotion_suggested_changes)
+                if fb.emotion_best_aspect:
+                    emotions.append(fb.emotion_best_aspect)
+                if fb.emotion_least_aspect:
+                    emotions.append(fb.emotion_least_aspect)
+                if fb.emotion_further_comments:
+                    emotions.append(fb.emotion_further_comments)
+                
+                from collections import Counter
+                emotion = Counter(emotions).most_common(1)[0][0] if emotions else 'acceptance'
+                
+                feedback_data.append({
+                    'feedback': combined_text,
+                    'label': emotion
                 })
+        
+        if len(feedback_data) < 10:
+            return Response({
+                'error': f'Need at least 10 text feedbacks for topic modeling. Currently have {len(feedback_data)}.',
+                'topics': [],
+                'topic_distribution': {},
+                'total_topics': 0
+            })
+        
+        all_feedback = pd.DataFrame(feedback_data)
+        
+        # Preprocess text
+        def preprocess_for_topics(text):
+            text = str(text).lower()
+            words = [w for w in text.split() if len(w) > 3 and not w.isdigit()]
+            return ' '.join(words)
+        
+        all_feedback['cleaned_text'] = all_feedback['feedback'].apply(preprocess_for_topics)
+        
+        # Create document-term matrix
+        vectorizer = CountVectorizer(
+            max_features=1000,
+            max_df=0.8,
+            min_df=2,
+            stop_words='english'
+        )
+        
+        doc_term_matrix = vectorizer.fit_transform(all_feedback['cleaned_text'])
+        feature_names = vectorizer.get_feature_names_out()
+        
+        # Train LDA model
+        n_topics = min(5, len(all_feedback) // 2)
+        
+        lda_model = LatentDirichletAllocation(
+            n_components=n_topics,
+            max_iter=50,
+            learning_method='online',
+            random_state=42,
+            n_jobs=-1
+        )
+        
+        lda_output = lda_model.fit_transform(doc_term_matrix)
+        
+        # Generate topic names and keywords
+        def generate_topic_name(keywords):
+            keyword_list = [k.lower() for k in keywords[:10]]
+            
+            topic_patterns = {
+                'Teaching Quality': ['teaching', 'instructor', 'professor', 'explain', 'explains', 'clear', 'understanding', 'lectures', 'lecture'],
+                'Course Content': ['content', 'material', 'materials', 'topics', 'subject', 'curriculum', 'knowledge', 'learning'],
+                'Assignments & Workload': ['assignments', 'homework', 'workload', 'tasks', 'work', 'projects', 'assignment', 'deadline'],
+                'Class Engagement': ['class', 'interactive', 'activities', 'discussions', 'participate', 'engaging', 'interesting', 'attention'],
+                'Assessment & Grading': ['exam', 'exams', 'test', 'tests', 'grade', 'grading', 'feedback', 'assessment', 'evaluation'],
+                'Time Management': ['time', 'schedule', 'pace', 'pacing', 'deadlines', 'timing', 'duration', 'hours'],
+                'Learning Support': ['help', 'support', 'guidance', 'office', 'hours', 'questions', 'clarification', 'assistance'],
+                'Course Organization': ['organized', 'structure', 'syllabus', 'schedule', 'plan', 'organization'],
+                'Student Experience': ['experience', 'enjoy', 'enjoyed', 'appreciate', 'liked', 'love', 'positive', 'good'],
+                'Communication': ['communication', 'responds', 'response', 'email', 'available', 'accessible', 'communicates']
+            }
+            
+            category_scores = {}
+            for category, patterns in topic_patterns.items():
+                score = sum(1 for kw in keyword_list if any(pattern in kw for pattern in patterns))
+                if score > 0:
+                    category_scores[category] = score
+            
+            if category_scores:
+                return max(category_scores, key=category_scores.get)
+            
+            return ' & '.join([k.title() for k in keywords[:2]])
+        
+        # Extract topics with meaningful names
+        topics_data = []
+        topic_name_map = {}
+        
+        for topic_idx, topic in enumerate(lda_model.components_):
+            top_indices = topic.argsort()[-15:][::-1]
+            top_words = [feature_names[i] for i in top_indices]
+            topic_name = generate_topic_name(top_words)
+            
+            topic_name_map[topic_idx] = topic_name
+            topics_data.append({
+                'topic': topic_name,
+                'keywords': top_words[:10]
+            })
+        
+        # Assign dominant topic to each feedback
+        all_feedback['dominant_topic'] = lda_output.argmax(axis=1)
+        all_feedback['topic_probability'] = lda_output.max(axis=1)
+        
+        # Calculate topic distribution
+        topic_counts = all_feedback['dominant_topic'].value_counts().to_dict()
+        topic_distribution = {topic_name_map.get(k, f'Topic {k+1}'): v for k, v in topic_counts.items()}
+        
+        # Calculate topic-emotion distribution
+        topic_emotion_dist = {}
+        if 'label' in all_feedback.columns:
+            topic_emotion = all_feedback.groupby(['dominant_topic', 'label']).size().unstack(fill_value=0)
+            topic_emotion_dist = topic_emotion.to_dict('index')
+            topic_emotion_dist = {topic_name_map.get(k, f'Topic {k+1}'): v for k, v in topic_emotion_dist.items()}
+        
+        # Generate insights for each topic
+        topic_insights = []
+        for topic_idx in range(n_topics):
+            topic_name = topic_name_map[topic_idx]
+            keywords = topics_data[topic_idx]['keywords']
+            emotion_dist = topic_emotion_dist.get(topic_name, {})
+            
+            insights = generate_topic_insights(keywords, emotion_dist)
+            
+            topic_insights.append({
+                'topic': topic_name,
+                'insights': insights
+            })
         
         return Response({
             'topics': topics_data,
@@ -1043,13 +1171,16 @@ def get_topic_modeling_data(request):
             'topic_emotion_distribution': topic_emotion_dist,
             'topic_insights': topic_insights,
             'total_topics': len(topics_data),
-            'insights_method': 'LDA-based' if insights_file.exists() else 'rule-based'
+            'insights_method': 'dynamic-lda',
+            'filtered': bool(instructor_id or course_id or department or semester or academic_year)
         })
         
     except Exception as e:
-        logger.error(f"Error loading topic modeling data: {str(e)}")
+        logger.error(f"Error generating topic modeling data: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return Response({
-            'error': f'Failed to load topic modeling data: {str(e)}'
+            'error': f'Failed to generate topic modeling data: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -112,15 +112,51 @@ print('\n' + '='*100)
 print('DISCOVERED TOPICS')
 print('='*100)
 
+def generate_topic_name(keywords):
+    """Generate a meaningful topic name based on keywords"""
+    keyword_list = [k.lower() for k in keywords[:10]]
+    
+    # Define topic categories based on keyword patterns
+    topic_patterns = {
+        'Teaching Quality': ['teaching', 'instructor', 'professor', 'explain', 'explains', 'clear', 'understanding', 'lectures', 'lecture'],
+        'Course Content': ['content', 'material', 'materials', 'topics', 'subject', 'curriculum', 'knowledge', 'learning'],
+        'Assignments & Workload': ['assignments', 'homework', 'workload', 'tasks', 'work', 'projects', 'assignment', 'deadline'],
+        'Class Engagement': ['class', 'interactive', 'activities', 'discussions', 'participate', 'engaging', 'interesting', 'attention'],
+        'Assessment & Grading': ['exam', 'exams', 'test', 'tests', 'grade', 'grading', 'feedback', 'assessment', 'evaluation'],
+        'Time Management': ['time', 'schedule', 'pace', 'pacing', 'deadlines', 'timing', 'duration', 'hours'],
+        'Learning Support': ['help', 'support', 'guidance', 'office', 'hours', 'questions', 'clarification', 'assistance'],
+        'Course Organization': ['organized', 'structure', 'organized', 'syllabus', 'schedule', 'plan', 'organization'],
+        'Student Experience': ['experience', 'enjoy', 'enjoyed', 'appreciate', 'liked', 'love', 'positive', 'good'],
+        'Communication': ['communication', 'responds', 'response', 'email', 'available', 'accessible', 'communicates']
+    }
+    
+    # Score each category based on keyword matches
+    category_scores = {}
+    for category, patterns in topic_patterns.items():
+        score = sum(1 for kw in keyword_list if any(pattern in kw for pattern in patterns))
+        if score > 0:
+            category_scores[category] = score
+    
+    # Return best matching category or generic name
+    if category_scores:
+        best_category = max(category_scores, key=category_scores.get)
+        return best_category
+    
+    # Fallback: use top 2 keywords
+    return ' & '.join([k.title() for k in keywords[:2]])
+
 def display_topics(model, feature_names, n_top_words=10):
-    """Display top words for each topic"""
+    """Display top words for each topic with meaningful names"""
     topics = {}
     for topic_idx, topic in enumerate(model.components_):
         top_indices = topic.argsort()[-n_top_words:][::-1]
         top_words = [feature_names[i] for i in top_indices]
-        topics[f'Topic {topic_idx + 1}'] = top_words
         
-        print(f'\nTopic {topic_idx + 1}:')
+        # Generate meaningful topic name
+        topic_name = generate_topic_name(top_words)
+        topics[topic_name] = top_words
+        
+        print(f'\n{topic_name}:')
         print(', '.join(top_words))
     
     return topics
@@ -131,21 +167,25 @@ topics_dict = display_topics(lda_model, feature_names, n_top_words=15)
 all_feedback['dominant_topic'] = lda_output.argmax(axis=1)
 all_feedback['topic_probability'] = lda_output.max(axis=1)
 
+# Create mapping of topic index to topic name
+topic_names_list = list(topics_dict.keys())
+topic_index_to_name = {i: name for i, name in enumerate(topic_names_list)}
+
 # Save results
 output_dir = Path('results/topic_modeling')
 output_dir.mkdir(parents=True, exist_ok=True)
 
-# Save topic keywords
+# Save topic keywords with meaningful names
 topics_df = pd.DataFrame([
-    {'Topic': f'Topic {i+1}', 'Keywords': ', '.join(words)}
-    for i, words in enumerate(topics_dict.values())
+    {'Topic': topic_name, 'Keywords': ', '.join(words)}
+    for topic_name, words in topics_dict.items()
 ])
 topics_df.to_csv(output_dir / 'topics_keywords.csv', index=False)
 print(f'\n✅ Saved: topics_keywords.csv')
 
-# Save feedback with topics
+# Save feedback with topics using meaningful names
 feedback_with_topics = all_feedback[['feedback', 'label', 'dominant_topic', 'topic_probability']].copy()
-feedback_with_topics['topic_name'] = feedback_with_topics['dominant_topic'].apply(lambda x: f'Topic {x+1}')
+feedback_with_topics['topic_name'] = feedback_with_topics['dominant_topic'].map(topic_index_to_name)
 feedback_with_topics.to_csv(output_dir / 'feedback_with_topics.csv', index=False)
 print('✅ Saved: feedback_with_topics.csv')
 
@@ -157,7 +197,7 @@ print('='*100)
 # Prepare topic data
 topics_data = []
 for topic_idx in range(n_topics):
-    topic_name = f'Topic {topic_idx + 1}'
+    topic_name = topic_index_to_name[topic_idx]
     keywords = topics_dict[topic_name]
     
     topic_data = all_feedback[all_feedback['dominant_topic'] == topic_idx]
