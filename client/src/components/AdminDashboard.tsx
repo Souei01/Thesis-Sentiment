@@ -740,7 +740,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#8E1B1B",
                   },
                 }}
-                className="h-[250px]"
+                className="h-[250px] w-full"
               >
                 <BarChart data={commitmentData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -766,7 +766,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#3b82f6",
                   },
                 }}
-                className="h-[250px]"
+                className="h-[250px] w-full"
               >
                 <BarChart data={knowledgeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -803,7 +803,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#ef4444",
                   },
                 }}
-                className="h-[250px]"
+                className="h-[250px] w-full"
               >
                 <PieChart>
                   <Pie
@@ -842,7 +842,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#f59e0b",
                   },
                 }}
-                className="h-[280px]"
+                className="h-[280px] w-full"
               >
                 <BarChart data={managementData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -868,7 +868,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#10b981",
                   },
                 }}
-                className="h-[280px]"
+                className="h-[280px] w-full"
               >
                 <BarChart data={learningData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -894,7 +894,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#8b5cf6",
                   },
                 }}
-                className="h-[280px]"
+                className="h-[280px] w-full"
               >
                 <BarChart data={assessmentData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
@@ -923,7 +923,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#8E1B1B",
                   },
                 }}
-                className="h-[280px]"
+                className="h-[280px] w-full"
               >
                 <RadarChart data={allRatingsData}>
                   <PolarGrid />
@@ -956,7 +956,7 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                     color: "#10b981",
                   },
                 }}
-                className="h-[280px]"
+                className="h-[280px] w-full"
               >
                 <BarChart data={experienceData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
