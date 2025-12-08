@@ -656,7 +656,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                     disabled={isCSHead}
                   >
                     <SelectTrigger id="department">
-                      <SelectValue placeholder="Select Department" />
+                      <SelectValue>
+                        {isCSHead ? 'Computer Science' : selectedDepartment === 'all' ? (isITHead ? 'IT & ACT (All)' : 'All Departments') : selectedDepartment === 'CS' ? 'Computer Science' : selectedDepartment === 'IT' ? 'Information Technology' : 'Associate in Computer Technology'}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
