@@ -568,13 +568,13 @@ def get_feedback_analytics(request):
         # dean has no restrictions (sees all)
     
     # Apply filters
-    if semester:
+    if semester and semester != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__semester=semester)
     
-    if academic_year:
+    if academic_year and academic_year != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__academic_year=academic_year)
     
-    if instructor_id:
+    if instructor_id and instructor_id != 'all':
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
     elif user.role == 'faculty':
         # Faculty can only see their own feedback
@@ -797,11 +797,11 @@ def get_emotion_analytics(request):
         # dean has no restrictions (sees all)
     
     # Apply filters
-    if semester:
+    if semester and semester != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__semester=semester)
-    if academic_year:
+    if academic_year and academic_year != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__academic_year=academic_year)
-    if instructor_id:
+    if instructor_id and instructor_id != 'all':
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
     elif user.role == 'faculty':
         feedback_qs = feedback_qs.filter(course_assignment__instructor=user)
@@ -1378,11 +1378,11 @@ def export_feedback_pdf(request):
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
     
     # Apply filters
-    if semester:
+    if semester and semester != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__semester=semester)
-    if academic_year:
+    if academic_year and academic_year != 'all':
         feedback_qs = feedback_qs.filter(feedback_session__academic_year=academic_year)
-    if instructor_id:
+    if instructor_id and instructor_id != 'all':
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
     elif user.role == 'faculty':
         feedback_qs = feedback_qs.filter(course_assignment__instructor=user)
@@ -1463,10 +1463,16 @@ def get_courses_list(request):
         courses_qs = courses_qs.filter(department=department)
     
     if instructor_id and instructor_id != 'all':
-        courses_qs = courses_qs.filter(assignments__instructor_id=instructor_id)
+        courses_qs = courses_qs.filter(
+            assignments__instructor_id=instructor_id,
+            assignments__is_active=True
+        ).distinct()
     elif user.role == 'faculty':
         # Faculty can only see their own courses
-        courses_qs = courses_qs.filter(assignments__instructor=user)
+        courses_qs = courses_qs.filter(
+            assignments__instructor=user,
+            assignments__is_active=True
+        ).distinct()
     
     # Order by department, year level, and code
     courses_qs = courses_qs.order_by('department', 'year_level', 'code')
@@ -1530,8 +1536,8 @@ def get_response_stats(request):
         elif user.admin_subrole == 'dept_head_it':
             enrollments_qs = enrollments_qs.filter(course_assignment__department__in=['IT', 'ACT'])
     
-    # Get total students (enrolled)
-    total_students = enrollments_qs.count()
+    # Get total unique students (not enrollments)
+    total_students = enrollments_qs.values('student_id').distinct().count()
     
     # Get all feedbacks for these enrollments in ONE query
     enrollment_list = list(enrollments_qs.values_list('student_id', 'course_assignment_id'))
@@ -1562,33 +1568,57 @@ def get_response_stats(request):
             feedbacks[key] = feedback
     
     # Now iterate enrollments once to build respondents and non-respondents
-    respondents = []
-    non_respondents = []
-    respondent_ids = set()
+    # Also track per-student progress
+    student_progress = {}  # student_id -> {completed: int, total: int, feedbacks: []}
     
     for enrollment in enrollments_qs:
+        student_id = enrollment.student.id
+        
+        # Initialize student progress tracking
+        if student_id not in student_progress:
+            student_progress[student_id] = {
+                'id': student_id,
+                'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+                'email': enrollment.student.email,
+                'student_id': enrollment.student.student_id,
+                'completed': 0,
+                'total': 0,
+                'feedbacks': []
+            }
+        
         key = (enrollment.student.id, enrollment.course_assignment.id)
         feedback = feedbacks.get(key)
         
-        student_data = {
-            'id': enrollment.student.id,
-            'name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
-            'email': enrollment.student.email,
-            'student_id': enrollment.student.student_id,
+        feedback_data = {
             'course': f"{enrollment.course_assignment.course.code} - {enrollment.course_assignment.course.name}",
-            'section': enrollment.course_assignment.section
+            'section': enrollment.course_assignment.section,
+            'submitted': feedback is not None,
+            'submitted_at': feedback.submitted_at.isoformat() if feedback and feedback.submitted_at else (feedback.created_at.isoformat() if feedback else None)
         }
         
+        student_progress[student_id]['total'] += 1
         if feedback:
-            respondent_ids.add(enrollment.student.id)
-            student_data['submitted_at'] = feedback.submitted_at.isoformat() if feedback.submitted_at else feedback.created_at.isoformat()
-            respondents.append(student_data)
-        else:
-            non_respondents.append(student_data)
+            student_progress[student_id]['completed'] += 1
+        student_progress[student_id]['feedbacks'].append(feedback_data)
     
-    # Calculate response rate
-    total_responses = len(respondents)
-    response_rate = (total_responses / total_students * 100) if total_students > 0 else 0
+    # Build respondents and non_respondents with progress
+    respondents = []
+    non_respondents = []
+    
+    for student_id, progress in student_progress.items():
+        progress['progress'] = f"{progress['completed']}/{progress['total']}"
+        progress['completion_rate'] = (progress['completed'] / progress['total'] * 100) if progress['total'] > 0 else 0
+        progress['status'] = 'Complete' if progress['completed'] == progress['total'] else 'Incomplete'
+        
+        if progress['completed'] > 0:
+            respondents.append(progress)
+        else:
+            non_respondents.append(progress)
+    
+    # Calculate response rate based on total feedback submissions vs total enrollments
+    total_enrollments = sum(p['total'] for p in student_progress.values())
+    total_completed = sum(p['completed'] for p in student_progress.values())
+    response_rate = (total_completed / total_enrollments * 100) if total_enrollments > 0 else 0
     
     # Get submissions over time (last 30 days)
     from datetime import datetime, timedelta
@@ -1619,7 +1649,8 @@ def get_response_stats(request):
     
     return Response({
         'total_students': total_students,
-        'total_responses': total_responses,
+        'total_enrollments': total_enrollments,
+        'total_completed': total_completed,
         'response_rate': response_rate,
         'respondents': respondents,
         'non_respondents': non_respondents,

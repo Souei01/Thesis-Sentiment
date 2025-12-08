@@ -11,24 +11,42 @@ import { Users, CheckCircle, XCircle, TrendingUp, Clock, Search, ChevronLeft, Ch
 
 interface ResponseStats {
   total_students: number;
-  total_responses: number;
+  total_enrollments: number;
+  total_completed: number;
   response_rate: number;
   respondents: Array<{
     id: number;
     name: string;
     email: string;
     student_id: string;
-    submitted_at: string;
-    course: string;
-    section: string;
+    completed: number;
+    total: number;
+    progress: string;
+    completion_rate: number;
+    status: string;
+    feedbacks: Array<{
+      course: string;
+      section: string;
+      submitted: boolean;
+      submitted_at: string | null;
+    }>;
   }>;
   non_respondents: Array<{
     id: number;
     name: string;
     email: string;
     student_id: string;
-    course: string;
-    section: string;
+    completed: number;
+    total: number;
+    progress: string;
+    completion_rate: number;
+    status: string;
+    feedbacks: Array<{
+      course: string;
+      section: string;
+      submitted: boolean;
+      submitted_at: string | null;
+    }>;
   }>;
   submissions_over_time: Array<{
     date: string;
@@ -454,9 +472,9 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
                   <th className="text-left py-3 px-4">Student ID</th>
                   <th className="text-left py-3 px-4">Name</th>
                   <th className="text-left py-3 px-4">Email</th>
-                  <th className="text-left py-3 px-4">Course</th>
-                  <th className="text-left py-3 px-4">Section</th>
-                  {activeTab === 'respondents' && <th className="text-left py-3 px-4">Submitted At</th>}
+                  <th className="text-left py-3 px-4">Progress</th>
+                  <th className="text-left py-3 px-4">Completion</th>
+                  <th className="text-left py-3 px-4">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -466,18 +484,34 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
                       <td className="py-3 px-4">{student.student_id}</td>
                       <td className="py-3 px-4">{student.name}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">{student.email}</td>
-                      <td className="py-3 px-4">{student.course}</td>
-                      <td className="py-3 px-4">{student.section}</td>
-                      {activeTab === 'respondents' && (
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {new Date((student as any).submitted_at).toLocaleString()}
-                        </td>
-                      )}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{(student as any).progress}</span>
+                          <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-green-500 transition-all"
+                              style={{ width: `${(student as any).completion_rate}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-sm font-medium">{(student as any).completion_rate.toFixed(1)}%</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          (student as any).status === 'Complete' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {(student as any).status}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={activeTab === 'respondents' ? 6 : 5} className="py-8 text-center text-gray-500">
+                    <td colSpan={6} className="py-8 text-center text-gray-500">
                       {searchQuery ? 'No results found for your search' : activeTab === 'respondents' ? 'No responses yet' : 'All students have responded!'}
                     </td>
                   </tr>
