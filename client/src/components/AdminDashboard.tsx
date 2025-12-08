@@ -102,6 +102,15 @@ interface TopicData {
   topics: Array<{ topic: string; keywords: string[] }>;
   topic_distribution: { [key: string]: number };
   total_topics: number;
+  topic_insights?: Array<{
+    topic: string;
+    insights: Array<{
+      category: string;
+      priority: 'high' | 'medium' | 'low';
+      suggestion: string;
+      icon: string;
+    }>;
+  }>;
 }
 
 export default function AdminDashboard({ userRole = 'admin' }: { userRole?: string }) {
@@ -402,6 +411,10 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   ];
 
   const sentimentData = useMemo(() => {
+    if (!analytics) {
+      return { positive: 0, neutral: 0, negative: 0 };
+    }
+    
     // Use emotion data if available, otherwise fallback to sentiment_score
     if (emotionData && emotionData.emotion_distribution) {
       const emotions = emotionData.emotion_distribution;
@@ -413,13 +426,17 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
     }
     
     // Fallback to sentiment_score from text feedback
-    return (analytics.text_feedback || []).reduce((acc: any, fb: any) => {
+    if (!analytics.text_feedback || analytics.text_feedback.length === 0) {
+      return { positive: 0, neutral: 0, negative: 0 };
+    }
+    
+    return analytics.text_feedback.reduce((acc: any, fb: any) => {
       if (fb.sentiment_score > 0) acc.positive++;
       else if (fb.sentiment_score < 0) acc.negative++;
       else acc.neutral++;
       return acc;
     }, { positive: 0, neutral: 0, negative: 0 });
-  }, [emotionData, analytics?.text_feedback]);
+  }, [emotionData, analytics]);
 
   const sentimentDistributionData = useMemo(() => [
     { name: 'Positive', value: sentimentData.positive, color: '#22c55e' },
