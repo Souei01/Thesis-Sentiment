@@ -140,7 +140,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   
   // Determine if user is department head and their department
   const isDepartmentHead = user?.email?.includes('.head@wmsu.edu.ph');
-  const userDepartment = user?.department || (isDepartmentHead && user?.email ? user.email.split('.')[0].toUpperCase() : null);
+  // Extract department from email (e.g., cs.head@wmsu.edu.ph -> CS)
+  const emailDepartment = isDepartmentHead && user?.email ? user.email.split('.')[0].toUpperCase() : null;
+  const userDepartment = emailDepartment || user?.department;
+  
+  console.log('User:', user);
+  console.log('Is Department Head:', isDepartmentHead);
+  console.log('Email Department:', emailDepartment);
+  console.log('User Department:', userDepartment);
   
   // IT head can filter IT and ACT, CS head can only see CS
   const isITHead = isDepartmentHead && userDepartment === 'IT';
