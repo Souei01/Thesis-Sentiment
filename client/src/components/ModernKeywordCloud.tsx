@@ -19,18 +19,21 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
     const loadSentimentWords = async () => {
       try {
         const response = await axiosInstance.get('/feedback/sentiment-words/');
-        console.log('API Response:', response.data);
+        console.log('=== API Response ===');
+        console.log('Positive words count:', response.data.positive?.length);
+        console.log('Negative words count:', response.data.negative?.length);
+        console.log('First 10 positive:', response.data.positive?.slice(0, 10));
+        console.log('First 10 negative:', response.data.negative?.slice(0, 10));
         
         const positive = new Set(response.data.positive || []);
         const negative = new Set(response.data.negative || []);
         
-        console.log('Loaded sentiment words:', {
-          positiveCount: positive.size,
-          negativeCount: negative.size,
-          hasBest: positive.has('best'),
-          firstFewPositive: Array.from(positive).slice(0, 10),
-          firstFewNegative: Array.from(negative).slice(0, 10)
-        });
+        console.log('=== After creating Sets ===');
+        console.log('Positive Set size:', positive.size);
+        console.log('Negative Set size:', negative.size);
+        console.log('Has "best":', positive.has('best'));
+        console.log('Has "good":', positive.has('good'));
+        console.log('Has "great":', positive.has('great'));
         
         setPositiveWords(positive);
         setNegativeWords(negative);
@@ -110,12 +113,7 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
           
           // Debug logging for specific words
           if (text === 'best' || text === 'good' || text === 'great') {
-            console.log(`Checking word "${text}":`, {
-              inPositive: positiveWords.has(text),
-              inNegative: negativeWords.has(text),
-              positiveWordsSize: positiveWords.size,
-              negativeWordsSize: negativeWords.size
-            });
+            console.log(`Word "${text}": inPositive=${positiveWords.has(text)}, inNegative=${negativeWords.has(text)}, posSize=${positiveWords.size}, negSize=${negativeWords.size}`);
           }
           
           if (positiveWords.has(text)) {
@@ -128,7 +126,8 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         .sort((a, b) => b.count - a.count)
         .slice(0, 30);
       
-      console.log('Final keywords with sentiment:', wordArray.filter(w => ['best', 'good', 'great'].includes(w.text)));
+      const testWords = wordArray.filter(w => ['best', 'good', 'great'].includes(w.text));
+      console.log('Final sentiment for test words:', JSON.stringify(testWords));
       
       return wordArray;
     } catch (error) {
