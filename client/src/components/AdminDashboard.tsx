@@ -223,9 +223,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
           console.log('  - Filtering by specific dept:', selectedDepartment);
           params.append('department', selectedDepartment);
         } else {
-          // If "all" selected for IT head, show IT and ACT (handled by backend)
-          console.log('  - Fetching IT+ACT instructors');
-          params.append('department', 'IT,ACT');
+          // If "all" selected for IT head, don't send department param
+          // Backend will automatically filter IT+ACT based on user's subrole
+          console.log('  - Fetching IT+ACT instructors (via backend subrole)');
         }
       } else if (selectedDepartment && selectedDepartment !== 'all') {
         // Admin can filter by any department
@@ -271,9 +271,9 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
           console.log('  - Filtering by specific dept:', selectedDepartment);
           params.append('department', selectedDepartment);
         } else {
-          // If "all" selected for IT head, show IT and ACT
-          console.log('  - Fetching IT+ACT courses');
-          params.append('department', 'IT,ACT');
+          // If "all" selected for IT head, don't send department param
+          // Backend will automatically filter IT+ACT based on user's subrole
+          console.log('  - Fetching IT+ACT courses (via backend subrole)');
         }
       } else if (selectedDepartment && selectedDepartment !== 'all') {
         // Admin can filter by any department
