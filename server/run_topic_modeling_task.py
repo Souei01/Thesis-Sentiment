@@ -24,7 +24,6 @@ def should_run_topic_modeling():
     Run if:
     - New feedback added since last run
     - At least 10 feedbacks exist
-    - Last run was more than 10 minutes ago
     """
     feedback_count = Feedback.objects.filter(status='submitted').count()
     
@@ -32,16 +31,6 @@ def should_run_topic_modeling():
     if feedback_count < 10:
         logger.info(f"Only {feedback_count} feedbacks. Need at least 10 for topic modeling.")
         return False
-    
-    # Check last run time (from file timestamp)
-    insights_file = Path('results/topic_modeling/lda_insights.json')
-    if insights_file.exists():
-        last_modified = datetime.fromtimestamp(insights_file.stat().st_mtime)
-        minutes_since_last_run = (datetime.now() - last_modified).total_seconds() / 60
-        
-        if minutes_since_last_run < 10:  # Don't run if ran in last 10 minutes
-            logger.info(f"Topic modeling ran {minutes_since_last_run:.1f} minutes ago. Skipping.")
-            return False
     
     return True
 
