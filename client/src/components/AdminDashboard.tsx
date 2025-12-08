@@ -250,7 +250,14 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
   const fetchTopicData = async () => {
     setTopicLoading(true);
     try {
-      const response = await axiosInstance.get('/topics/');
+      const params = new URLSearchParams();
+      if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
+      if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
+      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
+      if (courseId && courseId !== 'all') params.append('course_id', courseId);
+
+      const response = await axiosInstance.get(`/topics/?${params.toString()}`);
       setTopicData(response.data);
     } catch (error: any) {
       console.error('Error fetching topic data:', error);
