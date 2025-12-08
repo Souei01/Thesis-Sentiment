@@ -661,9 +661,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
+                      {isCSHead && <SelectItem value="CS">Computer Science</SelectItem>}
                       {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
                       {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
-                      {(userRole === 'admin' || isCSHead) && (
+                      {userRole === 'admin' && (
                         <SelectItem value="CS">Computer Science</SelectItem>
                       )}
                       {(userRole === 'admin' || isITHead) && (
