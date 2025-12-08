@@ -13,6 +13,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from '@/components/ui/chart';
+import {
   BarChart,
   Bar,
   LineChart,
@@ -726,15 +733,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Commitment to Teaching</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#8E1B1B",
+                  },
+                }}
+                className="h-[250px]"
+              >
                 <BarChart data={commitmentData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" domain={[0, 5]} />
                   <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#8E1B1B" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="var(--color-value)" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -744,15 +759,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Knowledge of Subject</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#3b82f6",
+                  },
+                }}
+                className="h-[250px]"
+              >
                 <BarChart data={knowledgeData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" domain={[0, 5]} />
                   <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#3b82f6" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="var(--color-value)" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -765,7 +788,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ChartContainer
+                config={{
+                  positive: {
+                    label: "Positive",
+                    color: "#10b981",
+                  },
+                  neutral: {
+                    label: "Neutral",
+                    color: "#f59e0b",
+                  },
+                  negative: {
+                    label: "Negative",
+                    color: "#ef4444",
+                  },
+                }}
+                className="h-[250px]"
+              >
                 <PieChart>
                   <Pie
                     data={sentimentDistributionData}
@@ -780,10 +819,10 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
                 </PieChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>
@@ -796,15 +835,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Management of Learning</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#f59e0b",
+                  },
+                }}
+                className="h-[280px]"
+              >
                 <BarChart data={managementData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
                   <YAxis domain={[0, 5]} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#f59e0b" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="var(--color-value)" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -814,15 +861,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Teaching & Learning Strategies</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#10b981",
+                  },
+                }}
+                className="h-[280px]"
+              >
                 <BarChart data={learningData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 10 }} />
                   <YAxis domain={[0, 5]} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#10b981" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="var(--color-value)" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -832,15 +887,23 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Feedback & Assessment</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#8b5cf6",
+                  },
+                }}
+                className="h-[280px]"
+              >
                 <BarChart data={assessmentData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" domain={[0, 5]} />
                   <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#8b5cf6" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="value" fill="var(--color-value)" />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>
@@ -853,7 +916,15 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardTitle className="text-base">Overall Performance Radar</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Rating",
+                    color: "#8E1B1B",
+                  },
+                }}
+                className="h-[280px]"
+              >
                 <RadarChart data={allRatingsData}>
                   <PolarGrid />
                   <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
@@ -861,13 +932,13 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
                   <Radar
                     name="Rating"
                     dataKey="value"
-                    stroke="#8E1B1B"
-                    fill="#8E1B1B"
+                    stroke="var(--color-value)"
+                    fill="var(--color-value)"
                     fillOpacity={0.6}
                   />
-                  <Tooltip />
+                  <ChartTooltip content={<ChartTooltipContent />} />
                 </RadarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -878,19 +949,27 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
               <CardDescription className="text-xs">Percentage of students agreeing</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Percentage",
+                    color: "#10b981",
+                  },
+                }}
+                className="h-[280px]"
+              >
                 <BarChart data={experienceData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" domain={[0, 100]} />
                   <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="value">
                     {experienceData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
         </div>

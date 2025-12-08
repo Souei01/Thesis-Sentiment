@@ -569,10 +569,16 @@ def get_feedback_analytics(request):
     
     # Apply filters
     if semester and semester != 'all':
-        feedback_qs = feedback_qs.filter(feedback_session__semester=semester)
+        feedback_qs = feedback_qs.filter(
+            Q(feedback_session__semester=semester) | 
+            Q(course_assignment__semester=semester)
+        )
     
     if academic_year and academic_year != 'all':
-        feedback_qs = feedback_qs.filter(feedback_session__academic_year=academic_year)
+        feedback_qs = feedback_qs.filter(
+            Q(feedback_session__academic_year=academic_year) |
+            Q(course_assignment__academic_year=academic_year)
+        )
     
     if instructor_id and instructor_id != 'all':
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
@@ -798,9 +804,15 @@ def get_emotion_analytics(request):
     
     # Apply filters
     if semester and semester != 'all':
-        feedback_qs = feedback_qs.filter(feedback_session__semester=semester)
+        feedback_qs = feedback_qs.filter(
+            Q(feedback_session__semester=semester) | 
+            Q(course_assignment__semester=semester)
+        )
     if academic_year and academic_year != 'all':
-        feedback_qs = feedback_qs.filter(feedback_session__academic_year=academic_year)
+        feedback_qs = feedback_qs.filter(
+            Q(feedback_session__academic_year=academic_year) |
+            Q(course_assignment__academic_year=academic_year)
+        )
     if instructor_id and instructor_id != 'all':
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
     elif user.role == 'faculty':
