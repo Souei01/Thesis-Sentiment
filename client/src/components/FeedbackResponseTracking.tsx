@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import axiosInstance from '@/lib/axios';
 import { Users, CheckCircle, XCircle, TrendingUp, Clock, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 interface ResponseStats {
   total_students: number;
@@ -87,6 +88,11 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [sectionFilter, setSectionFilter] = useState<string>('all');
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, yearFilter, sectionFilter, activeTab]);
+
   useEffect(() => {
     if (userRole === 'admin') {
       const fetchInstructors = async () => {
@@ -164,10 +170,10 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
     fetchResponseStats();
   }, [semester, academicYear, instructorId, courseId, department]);
 
-  // Reset to page 1 when search or tab changes
+  // Reset to page 1 when any filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, yearFilter, sectionFilter, activeTab, semester, academicYear, instructorId, courseId, department]);
 
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
@@ -182,8 +188,9 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading response statistics...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Spinner size="lg" />
+        <div className="text-lg text-gray-600">Loading response statistics...</div>
       </div>
     );
   }

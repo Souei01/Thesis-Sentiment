@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AlertDialog } from '@/components/ui/alert-dialog-custom';
 import { ChevronLeft, ChevronRight, Save, Send } from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 import { RatingInput } from './RatingInput';
@@ -93,6 +94,12 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
   onClose
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [alertDialog, setAlertDialog] = useState<{ open: boolean; title: string; description: string; type: 'error' | 'warning' | 'info' }>({ 
+    open: false, 
+    title: '', 
+    description: '', 
+    type: 'warning' 
+  });
   const [formData, setFormData] = useState<FeedbackFormData>(() => {
     // Load saved progress from formProgress utility
     const saved = getFormProgress(courseId);
@@ -178,7 +185,12 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
         isValidComment(comments.additionalComments);
 
       if (!hasAtLeastOneComment) {
-        alert('Please provide at least one meaningful comment. Avoid responses like "N/A", "none", or "." - we value your constructive feedback.');
+        setAlertDialog({
+          open: true,
+          title: 'Comment Required',
+          description: 'Please provide at least one meaningful comment. Avoid responses like "N/A", "none", or "." - we value your constructive feedback.',
+          type: 'warning'
+        });
         return false;
       }
 
@@ -193,7 +205,12 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
       for (const field of commentFields) {
         // If there's text, it must be valid
         if (field.value && field.value.trim() !== '' && !isValidComment(field.value)) {
-          alert(`Please provide a meaningful response for "${field.label}". Avoid responses like "N/A", "none", or just punctuation marks.`);
+          setAlertDialog({
+            open: true,
+            title: 'Invalid Comment',
+            description: `Please provide a meaningful response for "${field.label}". Avoid responses like "N/A", "none", or just punctuation marks.`,
+            type: 'warning'
+          });
           return false;
         }
       }
@@ -226,7 +243,12 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
     if (validateCurrentStep()) {
       setCurrentStep(prev => Math.min(prev + 1, FORM_STEPS.length));
     } else {
-      alert('Please answer all required questions before proceeding.');
+      setAlertDialog({
+        open: true,
+        title: 'Incomplete Form',
+        description: 'Please answer all required questions before proceeding.',
+        type: 'warning'
+      });
     }
   };
 
@@ -241,7 +263,12 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
       // Clear form progress from storage
       clearFormProgress(courseId);
     } else {
-      alert('Please answer all required questions before submitting.');
+      setAlertDialog({
+        open: true,
+        title: 'Incomplete Form',
+        description: 'Please answer all required questions before submitting.',
+        type: 'warning'
+      });
     }
   };
 
@@ -529,11 +556,18 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
                 type="number"
                 min="0"
                 max="168"
+                step="0.5"
                 value={formData.overallExperience.hoursPerWeek || ''}
-                onChange={(e) => updateFormData('overallExperience', 'hoursPerWeek', parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  if (val <= 168) {
+                    updateFormData('overallExperience', 'hoursPerWeek', val);
+                  }
+                }}
                 className="max-w-xs"
-                placeholder="Enter hours (e.g., 5)"
+                placeholder="Enter hours (e.g., 4.5)"
               />
+              <p className="text-xs text-gray-500 mt-1">Maximum: 168 hours per week (decimal values allowed)</p>
             </div>
             <RatingInput
               label="4. Overall, how do you rate your experience in this course?"
@@ -705,6 +739,15 @@ export const MultistepFeedbackForm: React.FC<MultistepFeedbackFormProps> = ({
           </div>
         </div>
       </Card>
+
+      {/* Alert Dialog for validations */}
+      <AlertDialog
+        open={alertDialog.open}
+        onClose={() => setAlertDialog({ ...alertDialog, open: false })}
+        title={alertDialog.title}
+        description={alertDialog.description}
+        type={alertDialog.type}
+      />
     </div>
   );
 };

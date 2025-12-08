@@ -53,6 +53,7 @@ import {
   Clock,
   MessageSquare,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import axiosInstance from '@/lib/axios';
 import CommentsWordCloud from '@/components/CommentsWordCloud';
 import ModernKeywordCloud from '@/components/ModernKeywordCloud';
@@ -347,8 +348,9 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading analytics...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Spinner size="lg" />
+        <div className="text-lg text-gray-600">Loading analytics...</div>
       </div>
     );
   }
@@ -1027,7 +1029,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
         {activeTab === 'emotions' && (
           <div className="space-y-6">
             {emotionLoading ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Spinner size="lg" />
                 <div className="text-lg text-gray-600">Loading emotion analytics...</div>
               </div>
             ) : emotionData ? (
@@ -1056,7 +1059,8 @@ export default function AdminDashboard({ userRole = 'admin' }: { userRole?: stri
         {activeTab === 'topics' && (
           <div>
             {topicLoading ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Spinner size="lg" />
                 <div className="text-lg text-gray-600">Loading topic modeling data...</div>
               </div>
             ) : topicData ? (

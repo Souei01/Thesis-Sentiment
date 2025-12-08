@@ -63,11 +63,16 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
       course.color === 'green' && "bg-green-50 border-green-200"
     )}>
       <CardHeader className="pb-3">
-        {/* Tag with fixed height to maintain alignment */}
-        <div className="h-6 mb-2">
+        {/* Tag and Semester Badge with fixed height to maintain alignment */}
+        <div className="h-6 mb-2 flex items-center gap-2">
           {course.tag && (
             <span className={cn("text-xs font-medium px-2 py-1 rounded", tagColors[course.tag])}>
               {course.tag}
+            </span>
+          )}
+          {course.semester && (
+            <span className="text-xs font-medium px-2 py-1 rounded bg-purple-100 text-purple-800 border border-purple-200">
+              {course.semester}
             </span>
           )}
         </div>
@@ -91,12 +96,28 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
       </CardHeader>
 
       <CardContent className="pb-3 flex-grow">
-        {/* Description with fixed height */}
+        {/* Description with fixed height and tooltip */}
         <div className="mb-3">
-          <p className="text-xs text-gray-600 line-clamp-3 h-[3.6rem]">
+          <p 
+            className="text-xs text-gray-600 line-clamp-3 h-[3.6rem]" 
+            title={course.description || 'No description available'}
+          >
             {course.description || 'No description available'}
           </p>
         </div>
+
+        {/* Due date prominently displayed with colored background */}
+        {course.dueDate && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-red-600" />
+              <div className="flex-1">
+                <p className="text-xs font-medium text-red-900">Due Date</p>
+                <p className="text-sm font-bold text-red-600">{course.dueDate}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Progress section with fixed height */}
         <div className="h-16 flex flex-col justify-center">
@@ -129,16 +150,6 @@ export default function CourseCard({ course, onRateCourse }: CourseCardProps) {
                   style={{ width: '100%' }}
                 />
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Due date with fixed height */}
-        <div className="h-6 flex items-center mt-2">
-          {course.dueDate && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Due: {course.dueDate}</span>
             </div>
           )}
         </div>

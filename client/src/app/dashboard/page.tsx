@@ -11,6 +11,7 @@ import { Course } from '@/types/course';
 import { FeedbackFormData } from '@/types/feedback';
 import axiosInstance from '@/lib/axios';
 import Cookies from 'js-cookie';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -107,7 +108,8 @@ export default function DashboardPage() {
       <DashboardLayout>
         <div className="max-w-[1400px] mx-auto px-6 py-8">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+              <Spinner size="lg" />
               <div className="text-lg text-gray-600">Loading your courses...</div>
             </div>
           ) : error ? (
