@@ -146,7 +146,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   const isITHead = isDepartmentHead && userDepartment === 'IT';
   const isCSHead = isDepartmentHead && userDepartment === 'CS';
   
-  const [selectedDepartment, setSelectedDepartment] = useState(isDepartmentHead && userDepartment ? userDepartment : 'all');
+  // CS head always locked to CS department, IT head defaults to 'all' (which means IT+ACT for them)
+  const [selectedDepartment, setSelectedDepartment] = useState(
+    isCSHead ? 'CS' : (isITHead ? 'all' : (isDepartmentHead && userDepartment ? userDepartment : 'all'))
+  );
   const [instructorId, setInstructorId] = useState('all');
   const [courseId, setCourseId] = useState('all');
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -657,15 +660,12 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                       </SelectTrigger>
                       <SelectContent>
                         {userRole === 'admin' && <SelectItem value="all">All Departments</SelectItem>}
+                        {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
                         {userRole === 'admin' && (
                           <SelectItem value="CS">Computer Science</SelectItem>
                         )}
-                        {(userRole === 'admin' || isITHead) && (
-                          <SelectItem value="IT">Information Technology</SelectItem>
-                        )}
-                        {(userRole === 'admin' || isITHead) && (
-                          <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
-                        )}
+                        <SelectItem value="IT">Information Technology</SelectItem>
+                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
