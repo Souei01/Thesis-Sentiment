@@ -535,7 +535,7 @@ def get_feedback_analytics(request):
     academic_year = request.GET.get('academic_year')  # e.g., '2024-2025'
     instructor_id = request.GET.get('instructor_id')  # faculty ID
     course_id = request.GET.get('course_id')  # specific course
-    department = request.GET.get('department')  # e.g., 'CS', 'IT', 'ICT'
+    department = request.GET.get('department')  # e.g., 'CS', 'IT', 'ACT'
     
     # Base queryset
     feedback_qs = Feedback.objects.filter(status='submitted')
@@ -547,21 +547,24 @@ def get_feedback_analytics(request):
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif department == 'ACT':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
         elif user.admin_subrole == 'dept_head_it':
-            # IT Department Head: IT and ICT/ACT courses
+            # IT Department Head: IT and ICT courses
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif user.admin_subrole == 'dept_head_act':
+            # ACT Department Head: only ACT courses
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
         # dean has no restrictions (sees all)
     
     # Apply filters
@@ -577,8 +580,8 @@ def get_feedback_analytics(request):
         # Faculty can only see their own feedback
         feedback_qs = feedback_qs.filter(course_assignment__instructor=user)
     
-    if course_id:
-        feedback_qs = feedback_qs.filter(course_assignment_id=course_id)
+    if course_id and course_id != 'all':
+        feedback_qs = feedback_qs.filter(course_assignment__course_id=course_id)
     
     # Get count
     total_feedback = feedback_qs.count()
@@ -773,21 +776,24 @@ def get_emotion_analytics(request):
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif department == 'ACT':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
             feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='CS')
         elif user.admin_subrole == 'dept_head_it':
-            # IT Department Head: IT and ICT/ACT courses
+            # IT Department Head: IT and ICT courses
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif user.admin_subrole == 'dept_head_act':
+            # ACT Department Head: only ACT courses
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
         # dean has no restrictions (sees all)
     
     # Apply filters
@@ -799,8 +805,8 @@ def get_emotion_analytics(request):
         feedback_qs = feedback_qs.filter(course_assignment__instructor_id=instructor_id)
     elif user.role == 'faculty':
         feedback_qs = feedback_qs.filter(course_assignment__instructor=user)
-    if course_id:
-        feedback_qs = feedback_qs.filter(course_assignment_id=course_id)
+    if course_id and course_id != 'all':
+        feedback_qs = feedback_qs.filter(course_assignment__course_id=course_id)
     
     # Count emotions for each field
     emotion_fields = [
@@ -1355,9 +1361,10 @@ def export_feedback_pdf(request):
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif department == 'ACT':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
@@ -1365,9 +1372,10 @@ def export_feedback_pdf(request):
         elif user.admin_subrole == 'dept_head_it':
             feedback_qs = feedback_qs.filter(
                 Q(course_assignment__course__code__startswith='IT') |
-                Q(course_assignment__course__code__startswith='ICT') |
-                Q(course_assignment__course__code__startswith='ACT')
+                Q(course_assignment__course__code__startswith='ICT')
             )
+        elif user.admin_subrole == 'dept_head_act':
+            feedback_qs = feedback_qs.filter(course_assignment__course__code__startswith='ACT')
     
     # Apply filters
     if semester:
