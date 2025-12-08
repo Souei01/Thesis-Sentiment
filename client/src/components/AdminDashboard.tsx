@@ -144,6 +144,10 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   const emailDepartment = isDepartmentHead && user?.email ? user.email.split('.')[0].toUpperCase() : null;
   const userDepartment = emailDepartment || user?.department;
   
+  // IT head can filter IT and ACT, CS head can only see CS
+  const isITHead = isDepartmentHead && userDepartment === 'IT';
+  const isCSHead = isDepartmentHead && userDepartment === 'CS';
+  
   console.log('User:', user);
   console.log('Is Department Head:', isDepartmentHead);
   console.log('Email Department:', emailDepartment);
@@ -151,10 +155,6 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   console.log('Is IT Head:', isITHead);
   console.log('Is CS Head:', isCSHead);
   console.log('User Role:', userRole);
-  
-  // IT head can filter IT and ACT, CS head can only see CS
-  const isITHead = isDepartmentHead && userDepartment === 'IT';
-  const isCSHead = isDepartmentHead && userDepartment === 'CS';
   
   // CS head always locked to CS department, IT head defaults to 'all' (which means IT+ACT for them)
   const [selectedDepartment, setSelectedDepartment] = useState(

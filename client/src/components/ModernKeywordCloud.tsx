@@ -77,10 +77,19 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         .map((feedback) => {
           if (!feedback) return '';
           const texts = [];
-          if (feedback.suggested_changes) texts.push(feedback.suggested_changes);
-          if (feedback.best_teaching_aspect) texts.push(feedback.best_teaching_aspect);
-          if (feedback.least_teaching_aspect) texts.push(feedback.least_teaching_aspect);
-          if (feedback.further_comments) texts.push(feedback.further_comments);
+          // Exclude "None" values from feedback text
+          if (feedback.suggested_changes && feedback.suggested_changes.toLowerCase() !== 'none') {
+            texts.push(feedback.suggested_changes);
+          }
+          if (feedback.best_teaching_aspect && feedback.best_teaching_aspect.toLowerCase() !== 'none') {
+            texts.push(feedback.best_teaching_aspect);
+          }
+          if (feedback.least_teaching_aspect && feedback.least_teaching_aspect.toLowerCase() !== 'none') {
+            texts.push(feedback.least_teaching_aspect);
+          }
+          if (feedback.further_comments && feedback.further_comments.toLowerCase() !== 'none') {
+            texts.push(feedback.further_comments);
+          }
           return texts.join(' ');
         })
         .join(' ')
@@ -101,6 +110,7 @@ export default function ModernKeywordCloud({ comments }: KeywordCloudProps) {
         'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just',
         'about', 'also', 'any', 'because', 'even', 'however', 'if', 'into',
         'like', 'made', 'make', 'much', 'over', 'through', 'up', 'using', 'want',
+        'none', // Exclude "none" from word cloud
         // Faculty names and variations (case-insensitive)
         'salimar', 'salih', 'sal', 'sir', 'maam', 'ma\'am', 'mr', 'mrs', 'ms',
         'jaydee', 'ballaho', 'lucy', 'felix', 'sadiwa', 'odon', 'maravilla',
