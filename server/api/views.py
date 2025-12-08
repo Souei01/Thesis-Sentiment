@@ -1334,8 +1334,11 @@ def get_available_years(request):
 @permission_classes([IsAuthenticated])
 def export_feedback_pdf(request):
     """Export feedback report as PDF"""
+    import logging
+    import traceback
     from .reports.pdf_generator import generate_feedback_report_pdf
     
+    logger = logging.getLogger(__name__)
     user = request.user
     
     if user.role not in ['faculty', 'admin']:
@@ -1421,8 +1424,7 @@ def export_feedback_pdf(request):
         
     except Exception as e:
         logger.error(f"Error generating PDF: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
         return Response(
             {'error': f'Failed to generate PDF report: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
