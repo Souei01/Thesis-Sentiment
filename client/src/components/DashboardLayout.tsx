@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, LogOut, User, Settings, Search } from 'lucide-react';
+import Image from 'next/image';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -26,10 +27,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <circle cx="50" cy="50" r="45" fill="#8E1B1B"/>
-                    <text x="50" y="65" fontSize="40" fill="white" textAnchor="middle" fontWeight="bold">U</text>
-                  </svg>
+                  <Image 
+                    src="/wmsu logo background removed.png" 
+                    alt="WMSU Logo" 
+                    width={40} 
+                    height={40}
+                    className="object-contain"
+                  />
                 </div>
                 <span className="font-bold text-white text-lg">
                   {user?.role === 'student' ? 'Student Portal' : user?.role === 'admin' ? 'Admin' : 'Faculty'}
