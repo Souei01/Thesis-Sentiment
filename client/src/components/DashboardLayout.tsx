@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1">
                   <Image 
-                    src="/wmsu logo background removed.png" 
+                    src="/wmsulogo.png" 
                     alt="WMSU Logo" 
                     width={40} 
                     height={40}

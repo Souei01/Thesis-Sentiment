@@ -106,7 +106,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center p-2">
             <Image 
-              src="/wmsu logo background removed.png" 
+              src="/wmsulogo.png" 
               alt="WMSU Logo" 
               width={56} 
               height={56}
@@ -135,7 +135,7 @@ export default function LoginPage() {
           <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
             <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center p-2">
               <Image 
-                src="/wmsu logo background removed.png" 
+                src="/wmsulogo.png" 
                 alt="WMSU Logo" 
                 width={56} 
                 height={56}
