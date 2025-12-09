@@ -573,28 +573,28 @@ def get_feedback_analytics(request):
     # Apply department filter for dean (overrides RBAC)
     if department and user.role == 'admin' and user.admin_subrole == 'dean':
         if department == 'CS':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif department == 'ACT':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif user.admin_subrole == 'dept_head_it':
             # IT Department Head: IT and ICT courses
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif user.admin_subrole == 'dept_head_act':
             # ACT Department Head: only ACT courses
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
         # dean has no restrictions (sees all)
     
     # Apply filters
@@ -802,28 +802,28 @@ def get_emotion_analytics(request):
     # Apply department filter for dean (overrides RBAC)
     if department and user.role == 'admin' and user.admin_subrole == 'dean':
         if department == 'CS':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif department == 'ACT':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
             # CS Department Head: only CS courses
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif user.admin_subrole == 'dept_head_it':
             # IT Department Head: IT and ICT courses
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif user.admin_subrole == 'dept_head_act':
             # ACT Department Head: only ACT courses
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
         # dean has no restrictions (sees all)
     
     # Apply filters
@@ -1040,7 +1040,7 @@ def get_topic_modeling_data(request):
             feedbacks = feedbacks.filter(course_assignment__course__id=course_id)
         
         if department and department != 'all':
-            feedbacks = feedbacks.filter(course_assignment__course__department=department)
+            feedbacks = feedbacks.filter(course_assignment__department=department)
         
         if semester and semester != 'all':
             feedbacks = feedbacks.filter(course_assignment__semester=semester)
@@ -1399,25 +1399,25 @@ def export_feedback_pdf(request):
     # Apply department filter for dean (overrides RBAC)
     if department and user.role == 'admin' and user.admin_subrole == 'dean':
         if department == 'CS':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif department == 'IT':
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif department == 'ACT':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
     # RBAC: Department head restrictions (only if no department filter)
     elif user.role == 'admin' and user.admin_subrole:
         if user.admin_subrole == 'dept_head_cs':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='CS')
+            feedback_qs = feedback_qs.filter(course_assignment__department='CS')
         elif user.admin_subrole == 'dept_head_it':
             feedback_qs = feedback_qs.filter(
-                Q(course_assignment__course__department='IT') |
-                Q(course_assignment__course__department='ICT')
+                Q(course_assignment__department='IT') |
+                Q(course_assignment__department='ICT')
             )
         elif user.admin_subrole == 'dept_head_act':
-            feedback_qs = feedback_qs.filter(course_assignment__course__department='ACT')
+            feedback_qs = feedback_qs.filter(course_assignment__department='ACT')
     
     # Apply filters
     if semester and semester != 'all':
