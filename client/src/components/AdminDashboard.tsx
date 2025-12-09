@@ -501,10 +501,15 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       if (error.response?.data instanceof Blob) {
         const text = await error.response.data.text();
         console.error('Error blob content:', text);
-        alert(`Failed to export report: ${text}`);
+        try {
+          const errorData = JSON.parse(text);
+          alert(`Cannot export report:\n\n${errorData.error || text}`);
+        } catch {
+          alert(`Cannot export report:\n\n${text}`);
+        }
       } else {
         const errorMsg = error.response?.data?.error || error.message || 'Unknown error';
-        alert(`Failed to export report: ${errorMsg}`);
+        alert(`Cannot export report:\n\n${errorMsg}`);
       }
     } finally {
       setExporting(false);
@@ -686,15 +691,21 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <h1 className="text-xl sm:text-2xl font-bold">Dashboard {isRefreshing && <span className="text-sm text-gray-500 ml-2">Updating...</span>}</h1>
-            <Button 
-              size="sm" 
-              className="gap-2 bg-[#8E1B1B] hover:bg-[#6B1414] w-full sm:w-auto"
-              onClick={handleExportReport}
-              disabled={exporting || isRefreshing || !analytics || analytics.total_feedback === 0}
-            >
-              <FileDown className="h-4 w-4" />
-              {exporting ? 'Exporting...' : 'Export Report'}
-            </Button>
+            <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
+              <Button 
+                size="sm" 
+                className="gap-2 bg-[#8E1B1B] hover:bg-[#6B1414] w-full sm:w-auto"
+                onClick={handleExportReport}
+                disabled={exporting || isRefreshing || !analytics || analytics.total_feedback === 0 || analytics.total_feedback < 10}
+                title={analytics && analytics.total_feedback < 10 ? `Need at least 10 feedback entries for topic modeling (currently have ${analytics.total_feedback})` : ''}
+              >
+                <FileDown className="h-4 w-4" />
+                {exporting ? 'Exporting...' : 'Export Report'}
+              </Button>
+              {analytics && analytics.total_feedback < 10 && analytics.total_feedback > 0 && (
+                <span className="text-xs text-red-600">Need 10+ feedback for report</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
