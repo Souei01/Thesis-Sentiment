@@ -145,7 +145,7 @@ export default function FeedbackResponseTracking({ userRole }: { userRole: strin
         const data = response.data;
         setStats({
           total_students: data.total_students || 0,
-          total_responses: data.total_responses || 0,
+          total_responses: data.total_completed || 0, // Use total_completed from backend
           response_rate: data.response_rate || 0,
           respondents: data.respondents || [],
           non_respondents: data.non_respondents || [],
