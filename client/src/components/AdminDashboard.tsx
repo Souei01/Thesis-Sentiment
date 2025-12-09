@@ -805,9 +805,13 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="instructor" className="text-sm">{isCSHead ? 'Instructor (CS)' : 'Instructor'}</Label>
-                    <Select value={instructorId} onValueChange={handleInstructorChange}>
+                    <Select 
+                      value={instructorId} 
+                      onValueChange={handleInstructorChange}
+                      disabled={selectedDepartment === 'all'}
+                    >
                       <SelectTrigger id="instructor" className="text-sm">
-                        <SelectValue placeholder="All Instructors" />
+                        <SelectValue placeholder={selectedDepartment === 'all' ? 'Select a department first' : 'All Instructors'} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Instructors</SelectItem>
@@ -822,9 +826,13 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                   
                   <div className="space-y-2">
                     <Label htmlFor="course" className="text-sm">{isCSHead ? 'Course/Subject (CS)' : 'Course/Subject'}</Label>
-                    <Select value={courseId} onValueChange={setCourseId}>
+                    <Select 
+                      value={courseId} 
+                      onValueChange={setCourseId}
+                      disabled={instructorId === 'all'}
+                    >
                       <SelectTrigger id="course" className="text-sm">
-                        <SelectValue placeholder="All Courses" />
+                        <SelectValue placeholder={instructorId === 'all' ? 'Select an instructor first' : 'All Courses'} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Courses</SelectItem>
