@@ -134,6 +134,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ userRole = 'admin', user }: AdminDashboardProps) {
   const [analytics, setAnalytics] = useState<FeedbackAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [academicYear, setAcademicYear] = useState('all');
@@ -357,7 +358,12 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   }, [activeTab, selectedSemester, academicYear, instructorId, selectedDepartment, courseId]);
 
   const fetchAnalytics = async () => {
-    setLoading(true);
+    // Use isRefreshing if we already have data, otherwise use loading for initial load
+    if (analytics) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const params = new URLSearchParams();
@@ -384,6 +390,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       setError(error.response?.data?.error || error.message || 'Failed to load analytics');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -666,17 +673,24 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* Subtle loading overlay when refreshing */}
+      {isRefreshing && (
+        <div className="absolute top-0 left-0 right-0 z-50 bg-blue-500 h-1">
+          <div className="h-full bg-blue-600 animate-pulse"></div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Dashboard {isRefreshing && <span className="text-sm text-gray-500 ml-2">Updating...</span>}</h1>
             <Button 
               size="sm" 
               className="gap-2 bg-[#8E1B1B] hover:bg-[#6B1414] w-full sm:w-auto"
               onClick={handleExportReport}
-              disabled={exporting || !analytics || analytics.total_feedback === 0}
+              disabled={exporting || isRefreshing || !analytics || analytics.total_feedback === 0}
             >
               <FileDown className="h-4 w-4" />
               {exporting ? 'Exporting...' : 'Export Report'}
