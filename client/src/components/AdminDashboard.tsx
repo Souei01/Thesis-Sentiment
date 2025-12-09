@@ -52,7 +52,6 @@ import {
   Star,
   Clock,
   MessageSquare,
-  Search,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import axiosInstance from '@/lib/axios';
@@ -172,7 +171,6 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
   const [emotionLoading, setEmotionLoading] = useState(false);
   const [topicLoading, setTopicLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Set department to CS when CS head user is loaded
   useEffect(() => {
@@ -201,6 +199,13 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       fetchCourses();
     }
   }, [selectedDepartment, instructorId, isITHead, isCSHead, userRole, isDepartmentHead]);
+
+  // Fetch courses for faculty users (filtered by their instructor_id)
+  useEffect(() => {
+    if (userRole === 'faculty' && user?.id) {
+      fetchFacultyCourses();
+    }
+  }, [userRole, user?.id]);
 
   const fetchInstructors = async () => {
     try {
@@ -303,6 +308,28 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     }
   };
 
+  const fetchFacultyCourses = async () => {
+    try {
+      console.log('📚 Fetching faculty courses START');
+      console.log('  - Faculty user ID:', user?.id);
+      
+      const params = new URLSearchParams();
+      if (user?.id) {
+        params.append('instructor_id', user.id.toString());
+      }
+      
+      console.log('📡 Faculty Courses API URL:', `/feedback/courses/?${params.toString()}`);
+      const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
+      console.log('✅ Faculty courses response:', response.data);
+      console.log('✅ Faculty courses count:', response.data.courses?.length || 0);
+      
+      setCourses(Array.isArray(response.data.courses) ? response.data.courses : []);
+    } catch (error) {
+      console.error('❌ Error fetching faculty courses:', error);
+      setCourses([]);
+    }
+  };
+
   const fetchAvailableYears = async () => {
     try {
       const response = await axiosInstance.get('/feedback/available-years/');
@@ -338,7 +365,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       const params = new URLSearchParams();
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      // For faculty, automatically use their own instructor_id
+      if (userRole === 'faculty' && user?.id) {
+        params.append('instructor_id', user.id.toString());
+      } else if (instructorId && instructorId !== 'all') {
+        params.append('instructor_id', instructorId);
+      }
+      
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
@@ -361,7 +395,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       const params = new URLSearchParams();
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      // For faculty, automatically use their own instructor_id
+      if (userRole === 'faculty' && user?.id) {
+        params.append('instructor_id', user.id.toString());
+      } else if (instructorId && instructorId !== 'all') {
+        params.append('instructor_id', instructorId);
+      }
+      
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
@@ -380,7 +421,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       const params = new URLSearchParams();
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      // For faculty, automatically use their own instructor_id
+      if (userRole === 'faculty' && user?.id) {
+        params.append('instructor_id', user.id.toString());
+      } else if (instructorId && instructorId !== 'all') {
+        params.append('instructor_id', instructorId);
+      }
+      
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
@@ -399,7 +447,14 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       const params = new URLSearchParams();
       if (selectedSemester && selectedSemester !== 'all') params.append('semester', selectedSemester);
       if (academicYear && academicYear !== 'all') params.append('academic_year', academicYear);
-      if (instructorId && instructorId !== 'all') params.append('instructor_id', instructorId);
+      
+      // For faculty, automatically use their own instructor_id
+      if (userRole === 'faculty' && user?.id) {
+        params.append('instructor_id', user.id.toString());
+      } else if (instructorId && instructorId !== 'all') {
+        params.append('instructor_id', instructorId);
+      }
+      
       if (selectedDepartment && selectedDepartment !== 'all') params.append('department', selectedDepartment);
       if (courseId && courseId !== 'all') params.append('course_id', courseId);
 
@@ -514,96 +569,57 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     );
   }
 
-  // Filter analytics data based on search query
-  const filteredAnalytics = searchQuery && analytics ? {
-    ...analytics,
-    text_feedback: analytics.text_feedback?.filter((feedback: any) => {
-      const query = searchQuery.toLowerCase().trim();
-      const studentName = `${feedback.student_name || ''}`.toLowerCase();
-      const courseName = `${feedback.course_name || ''}`.toLowerCase();
-      const courseCode = `${feedback.course_code || ''}`.toLowerCase();
-      const suggestedChanges = `${feedback.suggested_changes || ''}`.toLowerCase();
-      const furtherComments = `${feedback.further_comments || ''}`.toLowerCase();
-      
-      return (
-        studentName.includes(query) ||
-        courseName.includes(query) ||
-        courseCode.includes(query) ||
-        suggestedChanges.includes(query) ||
-        furtherComments.includes(query)
-      );
-    }),
-    total_feedback: analytics.text_feedback?.filter((feedback: any) => {
-      const query = searchQuery.toLowerCase().trim();
-      const studentName = `${feedback.student_name || ''}`.toLowerCase();
-      const courseName = `${feedback.course_name || ''}`.toLowerCase();
-      const courseCode = `${feedback.course_code || ''}`.toLowerCase();
-      const suggestedChanges = `${feedback.suggested_changes || ''}`.toLowerCase();
-      const furtherComments = `${feedback.further_comments || ''}`.toLowerCase();
-      
-      return (
-        studentName.includes(query) ||
-        courseName.includes(query) ||
-        courseCode.includes(query) ||
-        suggestedChanges.includes(query) ||
-        furtherComments.includes(query)
-      );
-    }).length || 0
-  } : analytics;
-
-  const displayAnalytics = filteredAnalytics || analytics;
-
   // Prepare chart data from analytics
   const commitmentData = [
-    { name: 'Sensitivity', value: displayAnalytics.commitment?.sensitivity || 0 },
-    { name: 'Integration', value: displayAnalytics.commitment?.integration || 0 },
-    { name: 'Availability', value: displayAnalytics.commitment?.availability || 0 },
-    { name: 'Punctuality', value: displayAnalytics.commitment?.punctuality || 0 },
-    { name: 'Record Keeping', value: displayAnalytics.commitment?.record_keeping || 0 },
+    { name: 'Sensitivity', value: analytics.commitment?.sensitivity || 0 },
+    { name: 'Integration', value: analytics.commitment?.integration || 0 },
+    { name: 'Availability', value: analytics.commitment?.availability || 0 },
+    { name: 'Punctuality', value: analytics.commitment?.punctuality || 0 },
+    { name: 'Record Keeping', value: analytics.commitment?.record_keeping || 0 },
   ];
 
   const knowledgeData = [
-    { name: 'Mastery', value: displayAnalytics.knowledge?.mastery || 0 },
-    { name: 'State of Art', value: displayAnalytics.knowledge?.state_of_art || 0 },
-    { name: 'Practical', value: displayAnalytics.knowledge?.practical_integration || 0 },
-    { name: 'Relevance', value: displayAnalytics.knowledge?.relevance || 0 },
-    { name: 'Trends', value: displayAnalytics.knowledge?.current_trends || 0 },
+    { name: 'Mastery', value: analytics.knowledge?.mastery || 0 },
+    { name: 'State of Art', value: analytics.knowledge?.state_of_art || 0 },
+    { name: 'Practical', value: analytics.knowledge?.practical_integration || 0 },
+    { name: 'Relevance', value: analytics.knowledge?.relevance || 0 },
+    { name: 'Trends', value: analytics.knowledge?.current_trends || 0 },
   ];
 
   const managementData = [
-    { name: 'Contribution', value: displayAnalytics.management?.student_contribution || 0 },
-    { name: 'Facilitator', value: displayAnalytics.management?.facilitator_role || 0 },
-    { name: 'Discussion', value: displayAnalytics.management?.discussion_encouragement || 0 },
-    { name: 'Methods', value: displayAnalytics.management?.instructional_methods || 0 },
-    { name: 'Materials', value: displayAnalytics.management?.instructional_materials || 0 },
+    { name: 'Contribution', value: analytics.management?.student_contribution || 0 },
+    { name: 'Facilitator', value: analytics.management?.facilitator_role || 0 },
+    { name: 'Discussion', value: analytics.management?.discussion_encouragement || 0 },
+    { name: 'Methods', value: analytics.management?.instructional_methods || 0 },
+    { name: 'Materials', value: analytics.management?.instructional_materials || 0 },
   ];
 
   const courseInfoData = [
-    { name: 'Syllabus Explained', value: displayAnalytics.course_info?.syllabus_explained || 0, color: '#22c55e' },
-    { name: 'Delivered as Outlined', value: displayAnalytics.course_info?.delivered_as_outlined || 0, color: '#3b82f6' },
-    { name: 'Grading Explained', value: displayAnalytics.course_info?.grading_criteria_explained || 0, color: '#a855f7' },
-    { name: 'Exams Related', value: displayAnalytics.course_info?.exams_related || 0, color: '#f59e0b' },
-    { name: 'Assignments Related', value: displayAnalytics.course_info?.assignments_related || 0, color: '#ef4444' },
-    { name: 'LMS Useful', value: displayAnalytics.course_info?.lms_resources_useful || 0, color: '#14b8a6' },
+    { name: 'Syllabus Explained', value: analytics.course_info?.syllabus_explained || 0, color: '#22c55e' },
+    { name: 'Delivered as Outlined', value: analytics.course_info?.delivered_as_outlined || 0, color: '#3b82f6' },
+    { name: 'Grading Explained', value: analytics.course_info?.grading_criteria_explained || 0, color: '#a855f7' },
+    { name: 'Exams Related', value: analytics.course_info?.exams_related || 0, color: '#f59e0b' },
+    { name: 'Assignments Related', value: analytics.course_info?.assignments_related || 0, color: '#ef4444' },
+    { name: 'LMS Useful', value: analytics.course_info?.lms_resources_useful || 0, color: '#14b8a6' },
   ];
 
   const learningData = [
-    { name: 'Teaching Strategies', value: displayAnalytics.independent_learning?.teaching_strategies || 0 },
-    { name: 'Student Esteem', value: displayAnalytics.independent_learning?.student_esteem || 0 },
-    { name: 'Student Autonomy', value: displayAnalytics.independent_learning?.student_autonomy || 0 },
-    { name: 'Independent Thinking', value: displayAnalytics.independent_learning?.independent_thinking || 0 },
-    { name: 'Beyond Required', value: displayAnalytics.independent_learning?.beyond_required || 0 },
+    { name: 'Teaching Strategies', value: analytics.independent_learning?.teaching_strategies || 0 },
+    { name: 'Student Esteem', value: analytics.independent_learning?.student_esteem || 0 },
+    { name: 'Student Autonomy', value: analytics.independent_learning?.student_autonomy || 0 },
+    { name: 'Independent Thinking', value: analytics.independent_learning?.independent_thinking || 0 },
+    { name: 'Beyond Required', value: analytics.independent_learning?.beyond_required || 0 },
   ];
 
   const assessmentData = [
-    { name: 'Clear Communication', value: displayAnalytics.feedback_assessment?.clear_communication || 0 },
-    { name: 'Timely Feedback', value: displayAnalytics.feedback_assessment?.timely_feedback || 0 },
-    { name: 'Improvement Feedback', value: displayAnalytics.feedback_assessment?.improvement_feedback || 0 },
+    { name: 'Clear Communication', value: analytics.feedback_assessment?.clear_communication || 0 },
+    { name: 'Timely Feedback', value: analytics.feedback_assessment?.timely_feedback || 0 },
+    { name: 'Improvement Feedback', value: analytics.feedback_assessment?.improvement_feedback || 0 },
   ];
 
   const experienceData = [
-    { name: 'Worthwhile Class', value: displayAnalytics.course_info?.worthwhile_class || 0, color: '#22c55e' },
-    { name: 'Would Recommend', value: displayAnalytics.course_info?.would_recommend || 0, color: '#3b82f6' },
+    { name: 'Worthwhile Class', value: analytics.course_info?.worthwhile_class || 0, color: '#22c55e' },
+    { name: 'Would Recommend', value: analytics.course_info?.would_recommend || 0, color: '#3b82f6' },
   ];
 
   const allRatingsData = [
@@ -616,7 +632,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
 
   // Calculate sentiment data (no useMemo to avoid dependency loops)
   const getSentimentData = () => {
-    if (!displayAnalytics) {
+    if (!analytics) {
       return { positive: 0, neutral: 0, negative: 0 };
     }
     
@@ -631,11 +647,11 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     }
     
     // Fallback to sentiment_score from text feedback
-    if (!displayAnalytics.text_feedback || displayAnalytics.text_feedback.length === 0) {
+    if (!analytics.text_feedback || analytics.text_feedback.length === 0) {
       return { positive: 0, neutral: 0, negative: 0 };
     }
     
-    return displayAnalytics.text_feedback.reduce((acc: any, fb: any) => {
+    return analytics.text_feedback.reduce((acc: any, fb: any) => {
       if (fb.sentiment_score > 0) acc.positive++;
       else if (fb.sentiment_score < 0) acc.negative++;
       else acc.neutral++;
@@ -714,34 +730,6 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            {/* Search Bar */}
-            <div className="mb-4">
-              <Label htmlFor="search" className="text-sm mb-2 block">Search Feedback</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  type="text"
-                  placeholder="Search by student name, course, or feedback content..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Only allow alphanumeric, spaces, and common punctuation
-                    if (value === '' || /^[a-zA-Z0-9\s.,\-'"]*$/.test(value)) {
-                      setSearchQuery(value);
-                    }
-                  }}
-                  className="pl-10 text-sm"
-                  maxLength={100}
-                />
-              </div>
-              {searchQuery && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Press Enter or type to filter results
-                </p>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {/* Semester Filter */}
               <div className="space-y-2">
@@ -852,6 +840,26 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                   </div>
                 </>
               )}
+
+              {/* Course Filter - For Faculty */}
+              {userRole === 'faculty' && (
+                <div className="space-y-2">
+                  <Label htmlFor="facultyCourse" className="text-sm">Your Courses</Label>
+                  <Select value={courseId} onValueChange={setCourseId}>
+                    <SelectTrigger id="facultyCourse" className="text-sm">
+                      <SelectValue placeholder="All Courses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Your Courses</SelectItem>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id.toString()}>
+                          {course.code} - {course.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -860,7 +868,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
         {activeTab === 'overview' && (
           <>
             {/* No Data Banner */}
-            {displayAnalytics.total_feedback === 0 && (
+            {analytics.total_feedback === 0 && (
               <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
                 <p className="font-semibold text-sm sm:text-base">No feedback data matches your current filters</p>
                 <p className="text-xs sm:text-sm mt-1">Try adjusting your filters above to see feedback data, or wait for students to submit feedback.</p>
@@ -877,7 +885,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
               <Activity className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{displayAnalytics.total_feedback}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{analytics.total_feedback}</div>
               <p className="text-xs text-gray-500 mt-1">
                 Responses collected
               </p>
@@ -892,7 +900,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
               <Star className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{displayAnalytics.average_rating?.toFixed(2) || 'N/A'}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{analytics.average_rating?.toFixed(2) || 'N/A'}</div>
               <p className="text-xs text-gray-500 mt-1">
                 Out of 5.0
               </p>
@@ -909,8 +917,8 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
             <CardContent className="px-4 sm:px-6">
               <div className="text-2xl sm:text-3xl font-bold text-green-600">+{sentimentData.positive}</div>
               <p className="text-xs text-gray-500 mt-1">
-                {displayAnalytics.text_feedback && displayAnalytics.text_feedback.length > 0 
-                  ? `${((sentimentData.positive / displayAnalytics.text_feedback.length) * 100).toFixed(1)}% of responses`
+                {analytics.text_feedback && analytics.text_feedback.length > 0 
+                  ? `${((sentimentData.positive / analytics.text_feedback.length) * 100).toFixed(1)}% of responses`
                   : 'No responses yet'
                 }
               </p>
@@ -925,7 +933,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
               <Clock className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{displayAnalytics.overall?.hours_per_week?.toFixed(1) || 'N/A'}</div>
+              <div className="text-2xl sm:text-3xl font-bold">{analytics.overall?.hours_per_week?.toFixed(1) || 'N/A'}</div>
               <p className="text-xs text-gray-500 mt-1">
                 Study time outside class
               </p>
@@ -1212,19 +1220,19 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
         {activeTab === 'analytics' && (
           <>
         {/* Modern Keyword Analysis */}
-        {displayAnalytics.text_feedback && displayAnalytics.text_feedback.length > 0 && (
+        {analytics.text_feedback && analytics.text_feedback.length > 0 && (
           <Card>
             <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-                Keyword Analysis ({displayAnalytics.text_feedback.length} comments)
+                Keyword Analysis ({analytics.text_feedback.length} comments)
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
                 Most frequently mentioned words from student feedback, grouped by sentiment
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <ModernKeywordCloud comments={displayAnalytics.text_feedback} />
+              <ModernKeywordCloud comments={analytics.text_feedback} />
             </CardContent>
           </Card>
         )}
