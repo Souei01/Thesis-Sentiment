@@ -313,10 +313,8 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
       console.log('📚 Fetching faculty courses START');
       console.log('  - Faculty user ID:', user?.id);
       
+      // Don't send instructor_id parameter - let the backend automatically filter by authenticated user
       const params = new URLSearchParams();
-      if (user?.id) {
-        params.append('instructor_id', user.id.toString());
-      }
       
       console.log('📡 Faculty Courses API URL:', `/feedback/courses/?${params.toString()}`);
       const response = await axiosInstance.get(`/feedback/courses/?${params.toString()}`);
