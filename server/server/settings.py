@@ -150,7 +150,6 @@ else:
             }
         }
         print("WARNING: Using SQLite database. Set DB_ENGINE=mysql in .env file to use MySQL/MariaDB.")
-    print("WARNING: Using SQLite database. Set DB_ENGINE=mysql in .env file to use MySQL/MariaDB.")
 
 
 # Password validation
