@@ -1,7 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Flame } from 'lucide-react';
+import { Fragment } from 'react';
+import { Flame, Smile, Frown, Meh, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface EmotionHeatmapProps {
   emotionByField?: {
@@ -18,149 +19,180 @@ interface EmotionHeatmapProps {
 
 const emotions = ['joy', 'satisfaction', 'acceptance', 'boredom', 'disappointment'] as const;
 
-const emotionColors: { [key: string]: { low: string; medium: string; high: string; veryHigh: string } } = {
-  joy: { low: '#dcfce7', medium: '#86efac', high: '#22c55e', veryHigh: '#15803d' },
-  satisfaction: { low: '#dbeafe', medium: '#93c5fd', high: '#3b82f6', veryHigh: '#1e40af' },
-  acceptance: { low: '#ede9fe', medium: '#c4b5fd', high: '#8b5cf6', veryHigh: '#6d28d9' },
-  boredom: { low: '#fef3c7', medium: '#fcd34d', high: '#f59e0b', veryHigh: '#d97706' },
-  disappointment: { low: '#fee2e2', medium: '#fca5a5', high: '#ef4444', veryHigh: '#dc2626' },
+const emotionMeta: { [key: string]: { color: string; bg: string; icon: any } } = {
+  joy: { color: '#10b981', bg: 'bg-emerald-50', icon: Smile },
+  satisfaction: { color: '#3b82f6', bg: 'bg-blue-50', icon: Smile },
+  acceptance: { color: '#8b5cf6', bg: 'bg-violet-50', icon: Meh },
+  boredom: { color: '#f59e0b', bg: 'bg-amber-50', icon: Clock },
+  disappointment: { color: '#ef4444', bg: 'bg-red-50', icon: Frown },
 };
 
 export default function EmotionHeatmap({ emotionByField, totalEmotions }: EmotionHeatmapProps) {
   if (!emotionByField) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-gray-500">
-          No emotion data available for heatmap
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+        <div className="p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
+            <Flame className="h-7 w-7 text-gray-300" />
+          </div>
+          <p className="text-gray-500 font-medium">No emotion data available</p>
+          <p className="text-sm text-gray-400 mt-1">Heatmap data will appear after feedback is analyzed.</p>
+        </div>
+      </div>
     );
   }
 
   const fields = Object.keys(emotionByField);
   
-  // Calculate max value across all cells for normalization
   const maxValue = Math.max(
     ...fields.flatMap(field => 
       emotions.map(emotion => emotionByField[field][emotion] || 0)
     ),
-    1 // Ensure at least 1 to avoid division by zero
+    1
   );
 
-  const getHeatColor = (emotion: string, value: number) => {
-    if (value === 0) return '#f3f4f6'; // gray-100 for zero
-    
+  const getHeatColor = (value: number) => {
+    if (value === 0) return 'rgba(243, 244, 246, 0.5)';
     const intensity = value / maxValue;
-    // Use maroon color (#8E1B1B) with varying opacity for intensity
-    const alpha = intensity;
-    return `rgba(142, 27, 27, ${alpha})`;
+    return `rgba(142, 27, 27, ${Math.max(intensity * 0.85, 0.08)})`;
   };
 
-  const getTextColor = (emotion: string, value: number) => {
-    if (value === 0) return '#9ca3af'; // gray-400
+  const getTextColor = (value: number) => {
+    if (value === 0) return '#d1d5db';
     const intensity = value / maxValue;
-    return intensity > 0.4 ? '#ffffff' : '#1f2937'; // white for dark bg, dark for light bg
+    return intensity > 0.35 ? '#ffffff' : '#374151';
+  };
+
+  const getSubTextColor = (value: number) => {
+    if (value === 0) return '#e5e7eb';
+    const intensity = value / maxValue;
+    return intensity > 0.35 ? 'rgba(255,255,255,0.7)' : '#9ca3af';
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-[#8E1B1B]" />
-          Emotion Heatmap
-        </CardTitle>
-        <CardDescription>
-          Intensity of emotions across different feedback sections
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-orange-50 to-red-50">
+            <Flame className="h-5 w-5 text-[#8E1B1B]" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Emotion Heatmap</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Intensity of emotions across feedback sections</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6">
+        <div className="overflow-x-auto -mx-2 px-2">
           <div className="inline-block min-w-full">
-            <div className="grid gap-1" style={{ gridTemplateColumns: `200px repeat(${emotions.length}, minmax(100px, 1fr))` }}>
+            {/* Table */}
+            <div
+              className="grid gap-[3px] rounded-xl overflow-hidden bg-gray-100/50"
+              style={{ gridTemplateColumns: `minmax(180px, 200px) repeat(${emotions.length}, minmax(90px, 1fr))` }}
+            >
               {/* Header Row */}
-              <div className="p-3 font-semibold text-sm text-gray-700 bg-gray-50 rounded-tl-lg"></div>
-              {emotions.map((emotion) => (
-                <div
-                  key={emotion}
-                  className="p-3 text-center font-semibold text-sm capitalize bg-gray-50"
-                  style={{ 
-                    color: emotionColors[emotion].veryHigh,
-                  }}
-                >
-                  {emotion}
-                </div>
-              ))}
+              <div className="p-3 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-end">
+                Field / Emotion
+              </div>
+              {emotions.map((emotion) => {
+                const meta = emotionMeta[emotion];
+                const Icon = meta.icon;
+                return (
+                  <div
+                    key={emotion}
+                    className="p-3 bg-white flex flex-col items-center justify-end gap-1.5"
+                  >
+                    <div className={cn("p-1.5 rounded-lg", meta.bg)}>
+                      <Icon className="h-3.5 w-3.5" style={{ color: meta.color }} />
+                    </div>
+                    <span className="text-[11px] font-semibold capitalize" style={{ color: meta.color }}>
+                      {emotion}
+                    </span>
+                  </div>
+                );
+              })}
 
               {/* Data Rows */}
-              {fields.map((field, fieldIndex) => (
-                <>
-                  <div
-                    key={`label-${field}`}
-                    className={`p-3 font-medium text-sm text-gray-700 bg-gray-50 ${
-                      fieldIndex === fields.length - 1 ? 'rounded-bl-lg' : ''
-                    }`}
-                  >
+              {fields.map((field) => (
+                <Fragment key={field}>
+                  <div className="p-3.5 bg-white font-medium text-sm text-gray-700 flex items-center">
                     {field}
                   </div>
-                  {emotions.map((emotion, emotionIndex) => {
+                  {emotions.map((emotion) => {
                     const value = emotionByField[field][emotion] || 0;
                     const percentage = totalEmotions > 0 ? ((value / totalEmotions) * 100).toFixed(1) : '0';
                     
                     return (
                       <div
                         key={`${field}-${emotion}`}
-                        className={`p-3 text-center transition-all hover:scale-105 hover:shadow-lg cursor-default relative group ${
-                          fieldIndex === fields.length - 1 && emotionIndex === emotions.length - 1 ? 'rounded-br-lg' : ''
-                        }`}
-                        style={{
-                          backgroundColor: getHeatColor(emotion, value),
-                          color: getTextColor(emotion, value),
-                        }}
+                        className="relative group cursor-default transition-transform duration-150 hover:scale-[1.04] hover:z-10"
                       >
-                        <div className="font-bold text-lg">{value}</div>
-                        <div className="text-xs opacity-75">{percentage}%</div>
-                        
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                          {field}: {value} {emotion} responses
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                            <div className="border-4 border-transparent border-t-gray-900"></div>
+                        <div
+                          className="p-3 h-full flex flex-col items-center justify-center rounded-sm"
+                          style={{
+                            backgroundColor: getHeatColor(value),
+                          }}
+                        >
+                          <span
+                            className="text-xl font-bold tabular-nums leading-none"
+                            style={{ color: getTextColor(value) }}
+                          >
+                            {value}
+                          </span>
+                          <span
+                            className="text-[10px] mt-1 tabular-nums"
+                            style={{ color: getSubTextColor(value) }}
+                          >
+                            {percentage}%
+                          </span>
+                        </div>
+
+                        {/* Modern Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-20">
+                          <div className="bg-gray-900/95 backdrop-blur-sm text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
+                            <span className="font-semibold">{field}</span>
+                            <br />
+                            <span className="capitalize">{emotion}</span>: {value} ({percentage}%)
                           </div>
+                          <div className="w-2 h-2 bg-gray-900/95 rotate-45 mx-auto -mt-1" />
                         </div>
                       </div>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </div>
 
             {/* Legend */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Intensity Scale</h4>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span>Low</span>
-                <div className="flex gap-1">
-                  {[0.2, 0.4, 0.6, 0.8, 1.0].map((intensity, i) => (
+            <div className="mt-6 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-gray-400">Intensity</span>
+                <div className="flex items-center gap-0.5">
+                  {[0, 0.15, 0.3, 0.5, 0.7, 0.85].map((intensity, i) => (
                     <div
                       key={i}
-                      className="w-12 h-6 rounded"
+                      className="w-8 h-5 first:rounded-l-md last:rounded-r-md"
                       style={{
-                        backgroundColor: intensity < 0.3 
-                          ? '#f3f4f6' 
+                        backgroundColor: intensity === 0
+                          ? 'rgba(243, 244, 246, 0.5)'
                           : `rgba(142, 27, 27, ${intensity})`,
                       }}
-                    ></div>
+                    />
                   ))}
                 </div>
-                <span>High</span>
+                <div className="flex gap-4 text-[10px] text-gray-400">
+                  <span>Low</span>
+                  <span>High</span>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Cell intensity represents the relative frequency of each emotion within the feedback section
+              <p className="text-[11px] text-gray-400">
+                Cell color intensity represents relative frequency of each emotion
               </p>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

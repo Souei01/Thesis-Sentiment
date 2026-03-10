@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -52,7 +53,22 @@ import {
   Star,
   Clock,
   MessageSquare,
+  BarChart3,
+  Brain,
+  Layers,
+  LayoutDashboard,
+  RefreshCw,
+  ChevronRight,
+  Sparkles,
+  GraduationCap,
+  ArrowUpRight,
+  Heart,
+  BookOpen,
+  Target,
+  Gauge,
+  PieChart as PieChartIcon,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 import axiosInstance from '@/lib/axios';
 import CommentsWordCloud from '@/components/CommentsWordCloud';
@@ -532,26 +548,40 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Spinner size="lg" />
-        <div className="text-lg text-gray-600">Loading analytics...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8E1B1B] to-rose-600 flex items-center justify-center shadow-lg shadow-red-200/50">
+            <Spinner size="lg" className="text-white" />
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-800">Loading Dashboard</p>
+          <p className="text-sm text-gray-500 mt-1">Preparing your analytics...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-            <p className="font-semibold">Error loading analytics</p>
-            <p className="text-sm">{error}</p>
-            <Button
-              onClick={fetchAnalytics}
-              className="mt-4 bg-red-600 hover:bg-red-700"
-            >
-              Retry
-            </Button>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-lg border border-red-100 overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
+            <div className="p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <Frown className="h-7 w-7 text-red-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Analytics</h3>
+              <p className="text-sm text-gray-500 mb-6">{error}</p>
+              <Button
+                onClick={fetchAnalytics}
+                className="bg-gradient-to-r from-[#8E1B1B] to-rose-600 hover:from-[#7A1717] hover:to-rose-700 text-white rounded-xl px-6 shadow-md shadow-red-200/50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -560,19 +590,26 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-6 text-center">
-            <p className="font-semibold text-lg mb-2">No Feedback Data Available</p>
-            <p className="text-sm mb-4">
-              No feedback data available for the selected filters. Try adjusting your filters or wait for students to submit feedback.
-            </p>
-            <Button
-              onClick={fetchAnalytics}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Refresh
-            </Button>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-lg border overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500" />
+            <div className="p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="h-7 w-7 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Feedback Data Yet</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Adjust your filters or wait for students to submit feedback.
+              </p>
+              <Button
+                onClick={fetchAnalytics}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl px-6 shadow-md shadow-blue-200/50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -677,88 +714,157 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     { name: 'Negative', value: sentimentData.negative, color: '#ef4444' },
   ];
 
+  // Tab configuration
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'emotions', label: 'Emotions', icon: Heart },
+    { id: 'topics', label: 'Topics', icon: Layers },
+  ];
+
+  // Active filter count for badge
+  const activeFilterCount = [
+    selectedSemester !== 'all',
+    academicYear !== 'all',
+    selectedDepartment !== 'all',
+    instructorId !== 'all',
+    courseId !== 'all',
+  ].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-gray-50 relative">
-      {/* Subtle loading overlay when refreshing */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-100/80">
+      {/* Smooth loading bar */}
       {isRefreshing && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-blue-500 h-1">
-          <div className="h-full bg-blue-600 animate-pulse"></div>
+        <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-gray-200/50 overflow-hidden">
+          <div className="h-full w-1/3 bg-gradient-to-r from-[#8E1B1B] via-rose-500 to-[#8E1B1B] rounded-full animate-pulse" 
+               style={{ animation: 'slideRight 1.5s ease-in-out infinite' }} />
         </div>
       )}
-      
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold">Dashboard {isRefreshing && <span className="text-sm text-gray-500 ml-2">Updating...</span>}</h1>
-            <div className="flex flex-col items-end gap-1 w-full sm:w-auto">
+
+      {/* Hero Header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#8E1B1B] via-[#A52222] to-[#7A1515]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        
+        <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm items-center justify-center border border-white/20">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    {userRole === 'faculty' ? 'Faculty Dashboard' : 'Admin Dashboard'}
+                  </h1>
+                  {isRefreshing && (
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs animate-pulse">
+                      Updating...
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-white/60 text-sm mt-0.5">
+                  Sentiment analysis & feedback insights
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button 
+                size="sm"
+                variant="ghost"
+                className="text-white/80 hover:text-white hover:bg-white/10 rounded-xl"
+                onClick={fetchAnalytics}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              </Button>
               <Button 
                 size="sm" 
-                className="gap-2 bg-[#8E1B1B] hover:bg-[#6B1414] w-full sm:w-auto"
+                className="gap-2 bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-sm rounded-xl shadow-lg shadow-black/10 transition-all w-full sm:w-auto"
                 onClick={handleExportReport}
                 disabled={exporting || isRefreshing || !analytics || analytics.total_feedback === 0 || analytics.total_feedback < 10}
-                title={analytics && analytics.total_feedback < 10 ? `Need at least 10 feedback entries for topic modeling (currently have ${analytics.total_feedback})` : ''}
+                title={analytics && analytics.total_feedback < 10 ? `Need at least 10 feedback entries (currently ${analytics.total_feedback})` : ''}
               >
                 <FileDown className="h-4 w-4" />
-                {exporting ? 'Exporting...' : 'Export Report'}
+                {exporting ? 'Exporting...' : 'Export PDF'}
               </Button>
-              {analytics && analytics.total_feedback < 10 && analytics.total_feedback > 0 && (
-                <span className="text-xs text-red-600">Need 10+ feedback for report</span>
-              )}
             </div>
           </div>
+          {analytics && analytics.total_feedback > 0 && analytics.total_feedback < 10 && (
+            <p className="text-amber-200/80 text-xs mt-2 flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> Need 10+ feedback entries to generate reports
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        {/* Overview Tabs */}
-        <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-6 overflow-x-auto">
-          <Button 
-            variant={activeTab === 'overview' ? 'default' : 'ghost'}
-            className={`${activeTab === 'overview' ? 'bg-white text-gray-900 hover:bg-gray-100 border-b-2 border-[#8E1B1B]' : 'text-gray-500'} whitespace-nowrap text-sm sm:text-base`}
-            onClick={() => setActiveTab('overview')}
-          >
-            Overview
-          </Button>
-          <Button 
-            variant={activeTab === 'analytics' ? 'default' : 'ghost'}
-            className={`${activeTab === 'analytics' ? 'bg-white text-gray-900 hover:bg-gray-100 border-b-2 border-[#8E1B1B]' : 'text-gray-500'} whitespace-nowrap text-sm sm:text-base`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            Analytics
-          </Button>
-          <Button 
-            variant={activeTab === 'emotions' ? 'default' : 'ghost'}
-            className={`${activeTab === 'emotions' ? 'bg-white text-gray-900 hover:bg-gray-100 border-b-2 border-[#8E1B1B]' : 'text-gray-500'} whitespace-nowrap text-sm sm:text-base`}
-            onClick={() => setActiveTab('emotions')}
-          >
-            Emotions
-          </Button>
-          <Button 
-            variant={activeTab === 'topics' ? 'default' : 'ghost'}
-            className={`${activeTab === 'topics' ? 'bg-white text-gray-900 hover:bg-gray-100 border-b-2 border-[#8E1B1B]' : 'text-gray-500'} whitespace-nowrap text-sm sm:text-base`}
-            onClick={() => setActiveTab('topics')}
-          >
-            Topics
-          </Button>
+      {/* Main Content Area */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 -mt-4 relative z-10">
+        
+        {/* Tab Navigation - Modern pill style */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200/60 p-1.5 inline-flex gap-1 overflow-x-auto w-full sm:w-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                    activeTab === tab.id
+                      ? "bg-gradient-to-r from-[#8E1B1B] to-[#A52222] text-white shadow-md shadow-red-900/20"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  )}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {activeFilterCount > 0 && (
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 rounded-full">
+              <Filter className="h-3 w-3 mr-1" />
+              {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} active
+            </Badge>
+          )}
         </div>
 
-        {/* Filters Card */}
-        <Card className="mb-4 sm:mb-6">
-          <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* Filters Panel */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm mb-6 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-gray-100">
+                <Filter className="h-4 w-4 text-gray-500" />
+              </div>
+              <span className="text-sm font-semibold text-gray-700">Filters</span>
+            </div>
+            {activeFilterCount > 0 && (
+              <button 
+                className="text-xs text-[#8E1B1B] hover:text-[#6B1414] font-medium transition-colors"
+                onClick={() => {
+                  setSelectedSemester('all');
+                  setAcademicYear('all');
+                  if (!isCSHead) setSelectedDepartment(isITHead ? 'all' : 'all');
+                  setInstructorId('all');
+                  setCourseId('all');
+                }}
+              >
+                Reset all
+              </button>
+            )}
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Semester Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="semester" className="text-sm">Semester</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="semester" className="text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</Label>
                 <Select value={selectedSemester} onValueChange={setSelectedSemester}>
-                  <SelectTrigger id="semester" className="text-sm">
+                  <SelectTrigger id="semester" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
                     <SelectValue placeholder="All Semesters" />
                   </SelectTrigger>
                   <SelectContent>
@@ -771,72 +877,51 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
               </div>
 
               {/* Academic Year Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="academicYear" className="text-sm">Academic Year</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="academicYear" className="text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</Label>
                 <Select value={academicYear} onValueChange={setAcademicYear}>
-                  <SelectTrigger id="academicYear" className="text-sm">
+                  <SelectTrigger id="academicYear" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
                     <SelectValue placeholder="All Years" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Years</SelectItem>
                     {availableYears.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Department Filter - Disabled for CS head, shown for Admin and IT head */}
+              {/* Department Filter */}
               {(userRole === 'admin' || isITHead || isCSHead) && (
-                <div className="space-y-2">
-                  <Label htmlFor="department" className="text-sm">Department</Label>
-                  <Select 
-                    value={selectedDepartment} 
-                    onValueChange={handleDepartmentChange}
-                    disabled={isCSHead}
-                  >
-                    <SelectTrigger id="department" className="text-sm">
+                <div className="space-y-1.5">
+                  <Label htmlFor="department" className="text-xs font-medium text-gray-500 uppercase tracking-wider">Department</Label>
+                  <Select value={selectedDepartment} onValueChange={handleDepartmentChange} disabled={isCSHead}>
+                    <SelectTrigger id="department" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
                       <SelectValue className="text-sm">
                         {isCSHead ? 'Computer Science' : selectedDepartment === 'all' ? (isITHead ? 'IT & ACT (All)' : 'All Departments') : selectedDepartment === 'CS' ? 'Computer Science' : selectedDepartment === 'IT' ? 'Information Technology' : 'Associate in Computer Technology'}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {/* CS Head - Only Computer Science */}
                       {isCSHead && <SelectItem value="CS">Computer Science</SelectItem>}
-                      
-                      {/* Admin - All options */}
                       {userRole === 'admin' && !isITHead && !isCSHead && <SelectItem value="all">All Departments</SelectItem>}
-                      {userRole === 'admin' && !isITHead && !isCSHead && (
-                        <SelectItem value="CS">Computer Science</SelectItem>
-                      )}
-                      
-                      {/* IT Head - Only IT & ACT options */}
+                      {userRole === 'admin' && !isITHead && !isCSHead && <SelectItem value="CS">Computer Science</SelectItem>}
                       {isITHead && <SelectItem value="all">IT & ACT (All)</SelectItem>}
-                      {(userRole === 'admin' || isITHead) && (
-                        <SelectItem value="IT">Information Technology</SelectItem>
-                      )}
-                      {(userRole === 'admin' || isITHead) && (
-                        <SelectItem value="ACT">Associate in Computer Technology</SelectItem>
-                      )}
+                      {(userRole === 'admin' || isITHead) && <SelectItem value="IT">Information Technology</SelectItem>}
+                      {(userRole === 'admin' || isITHead) && <SelectItem value="ACT">Associate in Computer Technology</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
-              {/* Instructor Filter - For Admin, IT head, and CS head */}
+              {/* Instructor Filter */}
               {(userRole === 'admin' || isITHead || isCSHead) && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="instructor" className="text-sm">{isCSHead ? 'Instructor (CS)' : 'Instructor'}</Label>
-                    <Select 
-                      value={instructorId} 
-                      onValueChange={handleInstructorChange}
-                      disabled={selectedDepartment === 'all'}
-                    >
-                      <SelectTrigger id="instructor" className="text-sm">
-                        <SelectValue placeholder={selectedDepartment === 'all' ? 'Select a department first' : 'All Instructors'} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="instructor" className="text-xs font-medium text-gray-500 uppercase tracking-wider">{isCSHead ? 'Instructor (CS)' : 'Instructor'}</Label>
+                    <Select value={instructorId} onValueChange={handleInstructorChange} disabled={selectedDepartment === 'all'}>
+                      <SelectTrigger id="instructor" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
+                        <SelectValue placeholder={selectedDepartment === 'all' ? 'Select department first' : 'All Instructors'} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Instructors</SelectItem>
@@ -849,15 +934,11 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                     </Select>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="course" className="text-sm">{isCSHead ? 'Course/Subject (CS)' : 'Course/Subject'}</Label>
-                    <Select 
-                      value={courseId} 
-                      onValueChange={setCourseId}
-                      disabled={instructorId === 'all'}
-                    >
-                      <SelectTrigger id="course" className="text-sm">
-                        <SelectValue placeholder={instructorId === 'all' ? 'Select an instructor first' : 'All Courses'} />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="course" className="text-xs font-medium text-gray-500 uppercase tracking-wider">{isCSHead ? 'Course (CS)' : 'Course/Subject'}</Label>
+                    <Select value={courseId} onValueChange={setCourseId} disabled={instructorId === 'all'}>
+                      <SelectTrigger id="course" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
+                        <SelectValue placeholder={instructorId === 'all' ? 'Select instructor first' : 'All Courses'} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Courses</SelectItem>
@@ -872,12 +953,12 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 </>
               )}
 
-              {/* Course Filter - For Faculty */}
+              {/* Faculty Course Filter */}
               {userRole === 'faculty' && (
-                <div className="space-y-2">
-                  <Label htmlFor="facultyCourse" className="text-sm">Your Courses</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="facultyCourse" className="text-xs font-medium text-gray-500 uppercase tracking-wider">Your Courses</Label>
                   <Select value={courseId} onValueChange={setCourseId}>
-                    <SelectTrigger id="facultyCourse" className="text-sm">
+                    <SelectTrigger id="facultyCourse" className="rounded-xl border-gray-200 focus:ring-[#8E1B1B]/20 focus:border-[#8E1B1B]/40 text-sm h-10">
                       <SelectValue placeholder="All Courses" />
                     </SelectTrigger>
                     <SelectContent>
@@ -892,391 +973,401 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Overview Tab Content */}
+        {/* ============ OVERVIEW TAB ============ */}
         {activeTab === 'overview' && (
           <>
             {/* No Data Banner */}
             {analytics.total_feedback === 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
-                <p className="font-semibold text-sm sm:text-base">No feedback data matches your current filters</p>
-                <p className="text-xs sm:text-sm mt-1">Try adjusting your filters above to see feedback data, or wait for students to submit feedback.</p>
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200/60 rounded-2xl p-5 mb-6 flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-100 shrink-0">
+                  <Sparkles className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-900 text-sm">No Feedback Data Found</p>
+                  <p className="text-xs text-amber-700/70 mt-1">Adjust your filters or wait for students to submit feedback.</p>
+                </div>
               </div>
             )}
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
-                Total Feedback
-              </CardTitle>
-              <Activity className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{analytics.total_feedback}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Responses collected
-              </p>
-            </CardContent>
-          </Card>
+            {/* Stats Cards - Modern glass design */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {/* Total Feedback */}
+              <div className="group relative bg-white rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#8E1B1B] to-rose-500" />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-rose-50 group-hover:bg-rose-100 transition-colors">
+                      <Activity className="h-5 w-5 text-[#8E1B1B]" />
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 text-gray-300 group-hover:text-[#8E1B1B] transition-colors" />
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Total Feedback</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1 tracking-tight">{analytics.total_feedback}</p>
+                  <p className="text-xs text-gray-400 mt-2">Responses collected</p>
+                </div>
+              </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
-                Average Rating
-              </CardTitle>
-              <Star className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{analytics.average_rating?.toFixed(2) || 'N/A'}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Out of 5.0
-              </p>
-            </CardContent>
-          </Card>
+              {/* Average Rating */}
+              <div className="group relative bg-white rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-yellow-500" />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-amber-50 group-hover:bg-amber-100 transition-colors">
+                      <Star className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-400">/ 5.0</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Average Rating</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1 tracking-tight">{analytics.average_rating?.toFixed(2) || 'N/A'}</p>
+                  <div className="flex items-center gap-1 mt-2">
+                    {[1,2,3,4,5].map(i => (
+                      <Star key={i} className={cn("h-3 w-3", i <= Math.round(analytics.average_rating || 0) ? "text-amber-400 fill-amber-400" : "text-gray-200")} />
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
-                Positive Sentiment
-              </CardTitle>
-              <SmilePlus className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold text-green-600">+{sentimentData.positive}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {analytics.text_feedback && analytics.text_feedback.length > 0 
-                  ? `${((sentimentData.positive / analytics.text_feedback.length) * 100).toFixed(1)}% of responses`
-                  : 'No responses yet'
-                }
-              </p>
-            </CardContent>
-          </Card>
+              {/* Positive Sentiment */}
+              <div className="group relative bg-white rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-500" />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-50 group-hover:bg-emerald-100 transition-colors">
+                      <SmilePlus className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    {analytics.text_feedback && analytics.text_feedback.length > 0 && (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs rounded-full">
+                        {((sentimentData.positive / analytics.text_feedback.length) * 100).toFixed(0)}%
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Positive Sentiment</p>
+                  <p className="text-3xl font-bold text-emerald-600 mt-1 tracking-tight">+{sentimentData.positive}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {analytics.text_feedback && analytics.text_feedback.length > 0 
+                      ? `of ${analytics.text_feedback.length} responses`
+                      : 'No responses yet'}
+                  </p>
+                </div>
+              </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">
-                Avg Hours/Week
-              </CardTitle>
-              <Clock className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="text-2xl sm:text-3xl font-bold">{analytics.overall?.hours_per_week?.toFixed(1) || 'N/A'}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Study time outside class
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Hours/Week */}
+              <div className="group relative bg-white rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500" />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 rounded-xl bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-400">hrs/wk</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Avg Study Hours</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1 tracking-tight">{analytics.overall?.hours_per_week?.toFixed(1) || 'N/A'}</p>
+                  <p className="text-xs text-gray-400 mt-2">Outside class time</p>
+                </div>
+              </div>
+            </div>
 
-        {/* Bento Grid Layout - Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 sm:gap-6 mb-6">
-          {/* Commitment - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Commitment to Teaching</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#8E1B1B",
-                  },
-                }}
-                className="h-[250px] w-full"
-              >
-                <BarChart data={commitmentData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 5]} />
-                  <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="var(--color-value)" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+            {/* Charts - Modern Bento Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-5 mb-6">
+              {/* Commitment - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-rose-50">
+                      <Heart className="h-3.5 w-3.5 text-[#8E1B1B]" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Commitment to Teaching</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#8E1B1B" } }} className="h-[250px] w-full">
+                    <BarChart data={commitmentData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
 
-          {/* Knowledge - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Knowledge of Subject</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#3b82f6",
-                  },
-                }}
-                className="h-[250px] w-full"
-              >
-                <BarChart data={knowledgeData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 5]} />
-                  <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="var(--color-value)" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+              {/* Knowledge - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-blue-50">
+                      <BookOpen className="h-3.5 w-3.5 text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Knowledge of Subject</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#3b82f6" } }} className="h-[250px] w-full">
+                    <BarChart data={knowledgeData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
 
-          {/* Sentiment Distribution - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Sentiment Distribution</CardTitle>
-              <CardDescription className="text-xs">
-                Positive (Joy + Satisfaction), Neutral (Acceptance), Negative (Boredom + Disappointment)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  positive: {
-                    label: "Positive",
-                    color: "#10b981",
-                  },
-                  neutral: {
-                    label: "Neutral",
-                    color: "#f59e0b",
-                  },
-                  negative: {
-                    label: "Negative",
-                    color: "#ef4444",
-                  },
-                }}
-                className="h-[250px] w-full"
-              >
-                <PieChart>
-                  <Pie
-                    data={sentimentDistributionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
+              {/* Sentiment Distribution - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-purple-50">
+                      <PieChartIcon className="h-3.5 w-3.5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-800">Sentiment Distribution</h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">Joy + Satisfaction | Acceptance | Boredom + Disappointment</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer
+                    config={{
+                      positive: { label: "Positive", color: "#10b981" },
+                      neutral: { label: "Neutral", color: "#f59e0b" },
+                      negative: { label: "Negative", color: "#ef4444" },
+                    }}
+                    className="h-[250px] w-full"
                   >
-                    {sentimentDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+                    <PieChart>
+                      <Pie data={sentimentDistributionData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="value" strokeWidth={2} stroke="#fff">
+                        {sentimentDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartLegend content={<ChartLegendContent />} />
+                    </PieChart>
+                  </ChartContainer>
+                </div>
+              </div>
+            </div>
 
-        {/* Second Row - Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 sm:gap-6 mb-6">
-          {/* Management - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Management of Learning</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#f59e0b",
-                  },
-                }}
-                className="h-[280px] w-full"
-              >
-                <BarChart data={managementData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 11 }} />
-                  <YAxis domain={[0, 5]} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="var(--color-value)" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+            {/* Second Row */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-5 mb-6">
+              {/* Management - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-50">
+                      <Target className="h-3.5 w-3.5 text-amber-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Management of Learning</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#f59e0b" } }} className="h-[280px] w-full">
+                    <BarChart data={managementData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
 
-          {/* Teaching & Learning - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Teaching & Learning Strategies</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#10b981",
-                  },
-                }}
-                className="h-[280px] w-full"
-              >
-                <BarChart data={learningData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 10 }} />
-                  <YAxis domain={[0, 5]} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="var(--color-value)" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+              {/* Teaching & Learning - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-50">
+                      <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Teaching & Learning Strategies</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#10b981" } }} className="h-[280px] w-full">
+                    <BarChart data={learningData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" angle={-20} textAnchor="end" height={70} tick={{ fontSize: 10, fill: '#64748b' }} />
+                      <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
 
-          {/* Feedback & Assessment - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Feedback & Assessment</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#8b5cf6",
-                  },
-                }}
-                className="h-[280px] w-full"
-              >
-                <BarChart data={assessmentData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 5]} />
-                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="var(--color-value)" />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Feedback & Assessment - 2 columns */}
+              <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-violet-50">
+                      <MessageSquare className="h-3.5 w-3.5 text-violet-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Feedback & Assessment</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#8b5cf6" } }} className="h-[280px] w-full">
+                    <BarChart data={assessmentData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: '#64748b' }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="var(--color-value)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
+            </div>
 
-        {/* Third Row - Radar and Experience */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 sm:gap-6 mb-6">
-          {/* Overall Performance Radar - 2 columns */}
-          <Card className="md:col-span-2">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Overall Performance Radar</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Rating",
-                    color: "#8E1B1B",
-                  },
-                }}
-                className="h-[280px] w-full"
-              >
-                <RadarChart data={allRatingsData}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 5]} />
-                  <Radar
-                    name="Rating"
-                    dataKey="value"
-                    stroke="var(--color-value)"
-                    fill="var(--color-value)"
-                    fillOpacity={0.6}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </RadarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
+            {/* Third Row - Radar and Experience */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-5 mb-6">
+              {/* Overall Performance Radar - 3 columns */}
+              <div className="md:col-span-3 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-rose-50">
+                      <Gauge className="h-3.5 w-3.5 text-[#8E1B1B]" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Overall Performance Radar</h3>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Rating", color: "#8E1B1B" } }} className="h-[300px] w-full">
+                    <RadarChart data={allRatingsData}>
+                      <PolarGrid stroke="#e2e8f0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fontSize: 10 }} />
+                      <Radar name="Rating" dataKey="value" stroke="var(--color-value)" fill="var(--color-value)" fillOpacity={0.25} strokeWidth={2} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </RadarChart>
+                  </ChartContainer>
+                </div>
+              </div>
 
-          {/* Overall Experience - 4 columns */}
-          <Card className="md:col-span-4">
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Overall Experience</CardTitle>
-              <CardDescription className="text-xs">Percentage of students agreeing</CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Percentage",
-                    color: "#10b981",
-                  },
-                }}
-                className="h-[280px] w-full"
-              >
-                <BarChart data={experienceData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 100]} />
-                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value">
-                    {experienceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Overall Experience - 3 columns */}
+              <div className="md:col-span-3 bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-50">
+                        <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-800">Overall Experience</h3>
+                    </div>
+                    <span className="text-[10px] text-gray-400">% students agreeing</span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ChartContainer config={{ value: { label: "Percentage", color: "#10b981" } }} className="h-[300px] w-full">
+                    <BarChart data={experienceData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                        {experienceData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ChartContainer>
+                </div>
+              </div>
+            </div>
 
-        {/* Fourth Row - Course Info */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
-          <Card>
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="text-sm sm:text-base">Course Information Agreement (% of Students)</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={courseInfoData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} />
-                  <YAxis domain={[0, 100]} label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft' }} />
-                  <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                  <Bar dataKey="value">
-                    {courseInfoData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+            {/* Fourth Row - Course Info */}
+            <div className="mb-8">
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-indigo-50">
+                      <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800">Course Information Agreement</h3>
+                    <span className="text-[10px] text-gray-400 ml-auto">% of students</span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={courseInfoData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <YAxis domain={[0, 100]} label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#94a3b8' } }} tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {courseInfoData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </>
         )}
 
-        {/* Analytics Tab Content */}
+        {/* ============ ANALYTICS TAB ============ */}
         {activeTab === 'analytics' && (
           <>
-        {/* Modern Keyword Analysis */}
-        {analytics.text_feedback && analytics.text_feedback.length > 0 && (
-          <Card>
-            <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-                Keyword Analysis ({analytics.text_feedback.length} comments)
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Most frequently mentioned words from student feedback, grouped by sentiment
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ModernKeywordCloud comments={analytics.text_feedback} />
-            </CardContent>
-          </Card>
-        )}
+            {analytics.text_feedback && analytics.text_feedback.length > 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-indigo-50">
+                        <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-800">Keyword Analysis</h3>
+                    </div>
+                    <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 rounded-full text-xs">
+                      {analytics.text_feedback.length} comments
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 ml-8">
+                    Most frequently mentioned words from student feedback, grouped by sentiment
+                  </p>
+                </div>
+                <div className="p-5">
+                  <ModernKeywordCloud comments={analytics.text_feedback} />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+                <div className="p-12 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="h-7 w-7 text-gray-300" />
+                  </div>
+                  <p className="text-gray-500 font-medium">No text feedback available</p>
+                  <p className="text-sm text-gray-400 mt-1">Students haven't submitted written feedback yet.</p>
+                </div>
+              </div>
+            )}
           </>
         )}
 
-        {/* Emotions Tab */}
+        {/* ============ EMOTIONS TAB ============ */}
         {activeTab === 'emotions' && (
           <div className="space-y-6">
             {emotionLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <Spinner size="lg" />
-                <div className="text-lg text-gray-600">Loading emotion analytics...</div>
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-16">
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center">
+                    <Spinner size="lg" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-700">Loading Emotions</p>
+                    <p className="text-xs text-gray-400 mt-1">Analyzing sentiment data...</p>
+                  </div>
+                </div>
               </div>
             ) : emotionData ? (
               <>
@@ -1291,22 +1382,33 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 />
               </>
             ) : (
-              <Card>
-                <CardContent className="py-10 text-center text-gray-500">
-                  No emotion data available. Students need to submit feedback first.
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+                <div className="p-12 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-pink-50 flex items-center justify-center mx-auto mb-4">
+                    <Heart className="h-7 w-7 text-pink-300" />
+                  </div>
+                  <p className="text-gray-500 font-medium">No Emotion Data Available</p>
+                  <p className="text-sm text-gray-400 mt-1">Students need to submit feedback first.</p>
+                </div>
+              </div>
             )}
           </div>
         )}
 
-        {/* Topics Tab */}
+        {/* ============ TOPICS TAB ============ */}
         {activeTab === 'topics' && (
           <div>
             {topicLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <Spinner size="lg" />
-                <div className="text-lg text-gray-600">Loading topic modeling data...</div>
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-16">
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                    <Spinner size="lg" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-700">Loading Topics</p>
+                    <p className="text-xs text-gray-400 mt-1">Running topic modeling analysis...</p>
+                  </div>
+                </div>
               </div>
             ) : topicData ? (
               <TopicModelingDashboard
@@ -1316,14 +1418,21 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
                 topicInsights={topicData.topic_insights}
               />
             ) : (
-              <Card>
-                <CardContent className="py-10 text-center text-gray-500">
-                  No topic modeling data available. Please run topic modeling analysis first.
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+                <div className="p-12 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+                    <Layers className="h-7 w-7 text-indigo-300" />
+                  </div>
+                  <p className="text-gray-500 font-medium">No Topic Data Available</p>
+                  <p className="text-sm text-gray-400 mt-1">Run topic modeling analysis to see results here.</p>
+                </div>
+              </div>
             )}
           </div>
         )}
+
+        {/* Bottom spacing */}
+        <div className="h-8" />
       </div>
     </div>
   );
