@@ -67,6 +67,7 @@ import {
   Target,
   Gauge,
   PieChart as PieChartIcon,
+  FileCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
@@ -76,6 +77,7 @@ import ModernKeywordCloud from '@/components/ModernKeywordCloud';
 import EmotionRadarChart from '@/components/EmotionRadarChart';
 import EmotionHeatmap from '@/components/EmotionHeatmap';
 import TopicModelingDashboard from '@/components/TopicModelingDashboard';
+import RevisionAnalysis from '@/components/RevisionAnalysis';
 
 interface FeedbackAnalytics {
   total_feedback: number;
@@ -720,6 +722,7 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'emotions', label: 'Emotions', icon: Heart },
     { id: 'topics', label: 'Topics', icon: Layers },
+    { id: 'quality', label: 'Quality Review', icon: FileCheck },
   ];
 
   // Active filter count for badge
@@ -1429,6 +1432,19 @@ export default function AdminDashboard({ userRole = 'admin', user }: AdminDashbo
               </div>
             )}
           </div>
+        )}
+
+        {/* ============ QUALITY REVIEW TAB ============ */}
+        {activeTab === 'quality' && (
+          <RevisionAnalysis
+            filters={{
+              semester: selectedSemester,
+              academic_year: academicYear,
+              instructor_id: instructorId,
+              course_id: courseId,
+              department: selectedDepartment,
+            }}
+          />
         )}
 
         {/* Bottom spacing */}

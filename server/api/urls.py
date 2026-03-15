@@ -13,6 +13,12 @@ from .views import (
     get_courses_list,
     get_response_stats,
     get_sentiment_words,
+    # Revision endpoints
+    get_alignment_analysis,
+    get_thematic_analysis,
+    get_encoding_consistency,
+    get_negative_course_summary,
+    get_ai_expert_comparison,
 )
 
 urlpatterns = [
@@ -29,4 +35,10 @@ urlpatterns = [
     path('emotions/analytics/', get_emotion_analytics, name='emotion_analytics'),
     path('topics/', get_topic_modeling_data, name='topic_modeling'),
     path('topics/trigger/', trigger_topic_modeling, name='trigger_topic_modeling'),
+    # Revision endpoints
+    path('revision/alignment-analysis/', get_alignment_analysis, name='alignment_analysis'),
+    path('revision/thematic-analysis/', get_thematic_analysis, name='thematic_analysis'),
+    path('revision/encoding-consistency/', get_encoding_consistency, name='encoding_consistency'),
+    path('revision/negative-summary/', get_negative_course_summary, name='negative_course_summary'),
+    path('revision/ai-expert-comparison/', get_ai_expert_comparison, name='ai_expert_comparison'),
 ]
