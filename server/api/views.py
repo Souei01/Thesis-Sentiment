@@ -1911,8 +1911,8 @@ def get_alignment_analysis(request):
 def get_thematic_analysis(request):
     """
     REVISION #2: Thematic Analysis
-    Analyze factors contributing to negative course ratings with per-course breakdown
-    and supporting evidence from student comments.
+    Analyze recurring comment themes across submitted feedback so this view focuses
+    on text patterns, while negative summary focuses on low-rating severity.
     """
     user = request.user
     
@@ -1923,14 +1923,18 @@ def get_thematic_analysis(request):
     feedback_qs = Feedback.objects.filter(status='submitted')
     feedback_qs = apply_rbac_filters(feedback_qs, user, request)
     
-    # Get negative feedback (ratings 1-2)
-    negative_feedback = feedback_qs.filter(overall_rating__lte=2).values(
+    # Analyze all submitted feedback with comment content so this tab is distinct
+    # from the negative-summary view.
+    feedback_rows = feedback_qs.values(
         'overall_rating',
         'suggested_changes',
+        'best_teaching_aspect',
         'least_teaching_aspect',
         'further_comments',
+        'emotion_best_aspect',
         'emotion_suggested_changes',
         'emotion_least_aspect',
+        'emotion_further_comments',
         'course_assignment__course__code',
         'course_assignment__course__name',
         'course_assignment__instructor__first_name',
@@ -1940,10 +1944,34 @@ def get_thematic_analysis(request):
     # Group by course
     course_themes = {}
     
-    for feedback in negative_feedback:
+    overall_themes = {
+        'teaching_methods': 0,
+        'course_materials': 0,
+        'assessment': 0,
+        'workload': 0,
+        'communication': 0,
+        'engagement': 0,
+        'other': 0
+    }
+    total_comment_records = 0
+    themed_feedback_count = 0
+
+    for feedback in feedback_rows:
         course_key = feedback['course_assignment__course__code']
         course_name = feedback['course_assignment__course__name']
         instructor = f"{feedback['course_assignment__instructor__first_name']} {feedback['course_assignment__instructor__last_name']}"
+
+        text_fields = [
+            feedback['suggested_changes'],
+            feedback['best_teaching_aspect'],
+            feedback['least_teaching_aspect'],
+            feedback['further_comments']
+        ]
+        non_empty_fields = [text.strip() for text in text_fields if text and str(text).strip()]
+        if not non_empty_fields:
+            continue
+
+        total_comment_records += 1
         
         if course_key not in course_themes:
             course_themes[course_key] = {
@@ -1951,8 +1979,10 @@ def get_thematic_analysis(request):
                 'course_name': course_name,
                 'instructor': instructor,
                 'count': 0,
+                'rated_feedback_count': 0,
                 'avg_rating': 0,
                 'ratings_sum': 0,
+                'theme_match_count': 0,
                 'themes': {
                     'teaching_methods': 0,
                     'course_materials': 0,
@@ -1967,34 +1997,51 @@ def get_thematic_analysis(request):
             }
         
         course_themes[course_key]['count'] += 1
-        course_themes[course_key]['ratings_sum'] += feedback['overall_rating']
+        if feedback['overall_rating'] is not None:
+            course_themes[course_key]['ratings_sum'] += feedback['overall_rating']
+            course_themes[course_key]['rated_feedback_count'] += 1
         
         # Count emotions
-        for emotion_field in ['emotion_suggested_changes', 'emotion_least_aspect']:
+        for emotion_field in ['emotion_suggested_changes', 'emotion_best_aspect', 'emotion_least_aspect', 'emotion_further_comments']:
             emotion = feedback[emotion_field]
             if emotion and emotion in course_themes[course_key]['emotions']:
                 course_themes[course_key]['emotions'][emotion] += 1
         
         # Identify themes from text using keywords
-        text_fields = [
-            feedback['suggested_changes'],
-            feedback['least_teaching_aspect'],
-            feedback['further_comments']
-        ]
-        combined_text = ' '.join([t.lower() if t else '' for t in text_fields])
-        
-        if any(word in combined_text for word in ['teach', 'explain', 'lecture', 'method', 'clarity', 'understand']):
+        combined_text = ' '.join([text.lower() for text in non_empty_fields])
+        matched_any_theme = False
+
+        if any(word in combined_text for word in ['teach', 'explain', 'lecture', 'method', 'clarity', 'understand', 'instruct', 'discussion']):
             course_themes[course_key]['themes']['teaching_methods'] += 1
-        if any(word in combined_text for word in ['material', 'resource', 'book', 'handout', 'slides', 'powerpoint']):
+            overall_themes['teaching_methods'] += 1
+            matched_any_theme = True
+        if any(word in combined_text for word in ['material', 'resource', 'book', 'handout', 'slides', 'powerpoint', 'module']):
             course_themes[course_key]['themes']['course_materials'] += 1
-        if any(word in combined_text for word in ['exam', 'test', 'quiz', 'grade', 'grading', 'assessment', 'score']):
+            overall_themes['course_materials'] += 1
+            matched_any_theme = True
+        if any(word in combined_text for word in ['exam', 'test', 'quiz', 'grade', 'grading', 'assessment', 'score', 'rubric']):
             course_themes[course_key]['themes']['assessment'] += 1
-        if any(word in combined_text for word in ['workload', 'too much', 'overwhelming', 'heavy', 'assignment', 'homework']):
+            overall_themes['assessment'] += 1
+            matched_any_theme = True
+        if any(word in combined_text for word in ['workload', 'too much', 'overwhelming', 'heavy', 'assignment', 'homework', 'deadline', 'tasks']):
             course_themes[course_key]['themes']['workload'] += 1
-        if any(word in combined_text for word in ['communicate', 'respond', 'feedback', 'reply', 'available', 'office hours']):
+            overall_themes['workload'] += 1
+            matched_any_theme = True
+        if any(word in combined_text for word in ['communicate', 'respond', 'feedback', 'reply', 'available', 'office hours', 'meet', 'meeting', 'absent']):
             course_themes[course_key]['themes']['communication'] += 1
-        if any(word in combined_text for word in ['boring', 'engage', 'interactive', 'interest', 'monotonous', 'dull']):
+            overall_themes['communication'] += 1
+            matched_any_theme = True
+        if any(word in combined_text for word in ['boring', 'engage', 'interactive', 'interest', 'monotonous', 'dull', 'fun', 'participate', 'motivating']):
             course_themes[course_key]['themes']['engagement'] += 1
+            overall_themes['engagement'] += 1
+            matched_any_theme = True
+
+        if matched_any_theme:
+            course_themes[course_key]['theme_match_count'] += 1
+            themed_feedback_count += 1
+        else:
+            course_themes[course_key]['themes']['other'] += 1
+            overall_themes['other'] += 1
         
         # Store sample comments (max 3 per course)
         if len(course_themes[course_key]['sample_comments']) < 3:
@@ -2003,26 +2050,41 @@ def get_thematic_analysis(request):
                     'text': feedback['suggested_changes'][:200],
                     'emotion': feedback['emotion_suggested_changes']
                 })
+            elif feedback['least_teaching_aspect']:
+                course_themes[course_key]['sample_comments'].append({
+                    'text': feedback['least_teaching_aspect'][:200],
+                    'emotion': feedback['emotion_least_aspect']
+                })
+            elif feedback['further_comments']:
+                course_themes[course_key]['sample_comments'].append({
+                    'text': feedback['further_comments'][:200],
+                    'emotion': feedback['emotion_further_comments']
+                })
     
     # Calculate averages and sort by count
     for course in course_themes.values():
-        course['avg_rating'] = round(course['ratings_sum'] / course['count'], 2) if course['count'] > 0 else 0
+        course['avg_rating'] = round(course['ratings_sum'] / course['rated_feedback_count'], 2) if course['rated_feedback_count'] > 0 else 0
         # Identify dominant theme
         dominant_theme = max(course['themes'], key=course['themes'].get)
         course['dominant_theme'] = dominant_theme
         course['dominant_theme_count'] = course['themes'][dominant_theme]
+        course['theme_coverage_pct'] = round((course['theme_match_count'] / course['count']) * 100, 2) if course['count'] > 0 else 0
     
     # Sort by count descending
-    sorted_courses = sorted(course_themes.values(), key=lambda x: x['count'], reverse=True)
+    sorted_courses = sorted(
+        course_themes.values(),
+        key=lambda x: (x['theme_match_count'], x['count']),
+        reverse=True
+    )
+    active_theme_count = sum(1 for count in overall_themes.values() if count > 0)
     
     return Response({
-        'total_negative_feedback': len(negative_feedback),
+        'total_feedback_analyzed': total_comment_records,
         'courses_analyzed': len(sorted_courses),
+        'themed_feedback_count': themed_feedback_count,
+        'active_theme_count': active_theme_count,
         'course_breakdown': sorted_courses,
-        'overall_themes': {
-            theme: sum(c['themes'][theme] for c in sorted_courses)
-            for theme in ['teaching_methods', 'course_materials', 'assessment', 'workload', 'communication', 'engagement', 'other']
-        }
+        'overall_themes': overall_themes
     }, status=status.HTTP_200_OK)
 
 
@@ -2233,80 +2295,128 @@ def get_negative_course_summary(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_ai_expert_comparison(request):
-    """
-    REVISION #5: AI vs Expert Comparison
-    Compare AI-based sentiment analysis with psychological (human/expert) evaluation,
-    including similarities, differences, and reasons for alignment or divergence.
-    """
-    from pathlib import Path
-    from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-    
-    user = request.user
-    
-    if user.role not in ['faculty', 'admin']:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-    
     try:
-        # Load annotation data with text
+        from pathlib import Path
+        from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
         base_path = Path(__file__).parent.parent / 'data' / 'annotations'
-        annotation_file = base_path / 'combined_annotations_with_text.csv'
-        
-        if not annotation_file.exists():
-            return Response({
-                'error': 'Annotation file not found',
-                'message': 'AI vs Expert comparison data is not available'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        df = pd.read_csv(annotation_file)
-        
-        # Use majority vote as ground truth
-        if 'annotator_1' in df.columns and 'annotator_2' in df.columns and 'annotator_3' in df.columns:
-            df['expert_label'] = df[['annotator_1', 'annotator_2', 'annotator_3']].mode(axis=1)[0]
-        elif 'label' in df.columns:
-            df['expert_label'] = df['label']
+        annotator_files = {
+            'annotator_1': base_path / 'Student Feedback Sentiment Annotation Form - Annotator-1.csv',
+            'annotator_2': base_path / 'Student Feedback Sentiment Annotation Form - Annotator-2.csv',
+            'annotator_3': base_path / 'Student Feedback Sentiment Annotation Form - Annotator-3.csv',
+        }
+        prelabel_file = base_path / 'Student Feedback Sentiment Annotation Form - Master Template.csv'
+
+        for file_path in list(annotator_files.values()) + [prelabel_file]:
+            if not file_path.exists():
+                return Response({
+                    'error': f'File not found: {file_path.name}',
+                    'message': 'AI vs Expert comparison data is not available'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        def normalize_text(value):
+            if value is None:
+                return ''
+            text = str(value).strip().lower().replace('\u2019', "'").replace('\u2018', "'")
+            return ' '.join(text.split())
+
+        def normalize_label(value):
+            val = str(value).strip().lower()
+            if val in ['', 'nan', 'none', 'n/a']:
+                return 'null'
+            return val
+
+        def extract_pairs(df):
+            columns = list(df.columns)
+            pairs = []
+            for idx, col_name in enumerate(columns):
+                c = str(col_name).strip().lower()
+                if c.startswith('label'):
+                    continue
+                next_col = columns[idx + 1] if idx + 1 < len(columns) else None
+                if next_col and str(next_col).strip().lower().startswith('label'):
+                    pairs.append((col_name, next_col))
+            return pairs
+
+        def flatten_file(file_path, annotator_key):
+            raw = pd.read_csv(file_path)
+            pairs = extract_pairs(raw)
+            rows = []
+            for row_idx, row in raw.iterrows():
+                respondent_id = row_idx + 1
+                for q_idx, (text_col, label_col) in enumerate(pairs, start=1):
+                    rows.append({
+                        'respondent_id': respondent_id,
+                        'question_num': q_idx,
+                        'feedback_text': str(row.get(text_col, '')).strip(),
+                        'feedback_text_norm': normalize_text(row.get(text_col, '')),
+                        annotator_key: normalize_label(row.get(label_col, 'null')),
+                    })
+            return pd.DataFrame(rows), len(raw) * len(pairs)
+
+        ann1_df, ann1_total = flatten_file(annotator_files['annotator_1'], 'annotator_1')
+        ann2_df, ann2_total = flatten_file(annotator_files['annotator_2'], 'annotator_2')
+        ann3_df, ann3_total = flatten_file(annotator_files['annotator_3'], 'annotator_3')
+        pre_df, prelabel_total_pairs = flatten_file(prelabel_file, 'ai_prediction')
+
+        # Build expert frame from the same feedback entries across all 3 annotators.
+        expert_df = ann1_df.merge(
+            ann2_df[['respondent_id', 'question_num', 'feedback_text_norm', 'annotator_2']],
+            on=['respondent_id', 'question_num', 'feedback_text_norm'],
+            how='inner'
+        ).merge(
+            ann3_df[['respondent_id', 'question_num', 'feedback_text_norm', 'annotator_3']],
+            on=['respondent_id', 'question_num', 'feedback_text_norm'],
+            how='inner'
+        )
+
+        # Compare same feedback position with AI pre-labeling (same respondent + same question).
+        # Exact text can vary slightly across files (cleanup/normalization), so we keep diagnostics.
+        df = expert_df.merge(
+            pre_df[['respondent_id', 'question_num', 'feedback_text_norm', 'ai_prediction']],
+            on=['respondent_id', 'question_num'],
+            how='inner',
+            suffixes=('_expert', '_ai')
+        )
+
+        if 'feedback_text_norm_expert' in df.columns and 'feedback_text_norm_ai' in df.columns:
+            df['same_feedback_text_exact'] = (df['feedback_text_norm_expert'] == df['feedback_text_norm_ai'])
+            text_exact_match_count = int(df['same_feedback_text_exact'].sum())
         else:
+            text_exact_match_count = 0
+
+        if len(df) == 0:
             return Response({
-                'error': 'No expert labels found in data'
+                'error': 'No overlapping same-feedback rows between annotator files and pre-labeling file'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # If AI predictions are stored, use them; otherwise, predict now
-        text_column = None
-        for candidate_col in ['feedback', 'feedback_text', 'text', 'comment', 'response']:
-            if candidate_col in df.columns:
-                text_column = candidate_col
-                break
 
-        if 'ai_prediction' not in df.columns and text_column:
-            # Get AI predictions for available feedback text column
-            texts = df[text_column].fillna('').astype(str).tolist()
-            model_outputs = predict_emotions_batch(texts)
+        df['expert_label'] = df[['annotator_1', 'annotator_2', 'annotator_3']].mode(axis=1)[0]
+        prelabel_matched_rows = int((df['ai_prediction'] != 'null').sum())
 
-            # Support multiple output shapes from predictor
-            def extract_pred_label(pred):
-                if isinstance(pred, dict):
-                    return pred.get('emotion') or pred.get('label') or pred.get('prediction')
-                return pred
+        valid_emotions = {'joy', 'satisfaction', 'acceptance', 'boredom', 'disappointment'}
+        shared_mask = df['ai_prediction'].isin(valid_emotions)
+        for col in ['annotator_1', 'annotator_2', 'annotator_3']:
+            shared_mask = shared_mask & df[col].isin(valid_emotions)
 
-            df['ai_prediction'] = [extract_pred_label(pred) for pred in model_outputs]
-        
-        if 'ai_prediction' not in df.columns:
-            return Response({
-                'error': 'AI predictions not available'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Filter out invalid rows
-        valid_df = df[df['expert_label'].notna() & df['ai_prediction'].notna()]
-        
+        valid_df = df[shared_mask].copy()
         if len(valid_df) == 0:
             return Response({
-                'error': 'No valid comparison data available'
+                'error': 'No comparable rows after removing null/irrelevant labels'
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        annotator_comparisons = []
+        for col in ['annotator_1', 'annotator_2', 'annotator_3']:
+            ann_accuracy = accuracy_score(valid_df[col].tolist(), valid_df['ai_prediction'].tolist())
+            annotator_comparisons.append({
+                'annotator': col.replace('annotator_', 'Annotator '),
+                'accuracy': round(ann_accuracy, 4),
+                'total_comparisons': len(valid_df),
+                'coverage_pct': round((len(valid_df) / len(df)) * 100, 2)
+            })
+
+        accuracy = sum(item['accuracy'] for item in annotator_comparisons) / len(annotator_comparisons)
+
         expert_labels = valid_df['expert_label'].tolist()
         ai_predictions = valid_df['ai_prediction'].tolist()
-        
-        # Calculate accuracy
-        accuracy = accuracy_score(expert_labels, ai_predictions)
         
         # Classification report
         report = classification_report(expert_labels, ai_predictions, output_dict=True, zero_division=0)
@@ -2320,7 +2430,7 @@ def get_ai_expert_comparison(request):
         disagreements = []
         
         for idx, row in valid_df.iterrows():
-            sample_text = row.get(text_column, '') if text_column else row.get('feedback', '')
+            sample_text = row.get('feedback_text') or row.get('feedback') or row.get('text') or row.get('feedback_id', '')
             if row['expert_label'] == row['ai_prediction']:
                 if len(agreements) < 5:  # Store top 5 examples
                     agreements.append({
@@ -2373,7 +2483,29 @@ def get_ai_expert_comparison(request):
         
         return Response({
             'overall_accuracy': round(accuracy, 4),
-            'total_comparisons': len(valid_df),
+            'total_comparisons': len(df),
+            'total_comparisons_filtered': len(valid_df),
+            'total_rows_loaded': len(df),
+            'rows_excluded': len(df) - len(valid_df),
+            'comparison_method': 'Only same feedback entries between Annotator-1/2/3 and pre-labeling are compared.',
+            'ai_match_method': 'respondent_question_position',
+            'same_feedback_text_exact_matches': text_exact_match_count,
+            'prelabel_matched_rows': prelabel_matched_rows,
+            'prelabel_total_pairs': prelabel_total_pairs,
+            'label_filter': {
+                'included': sorted(list(valid_emotions)),
+                'excluded_examples': ['null', 'none', 'n/a', 'nan', 'irrelevant']
+            },
+            'annotator_comparisons': annotator_comparisons,
+            'data_sources': {
+                'ai_annotated': 'Student Feedback Sentiment Annotation Form - Master Template.csv',
+                'human_annotated': [
+                    'Student Feedback Sentiment Annotation Form - Annotator-1.csv',
+                    'Student Feedback Sentiment Annotation Form - Annotator-2.csv',
+                    'Student Feedback Sentiment Annotation Form - Annotator-3.csv'
+                ],
+                'comparison_dataset': 'Same-feedback join of Annotator-1/2/3 with pre-labeling'
+            },
             'emotion_performance': emotion_performance,
             'confusion_matrix': {
                 'labels': emotions,
@@ -2392,7 +2524,7 @@ def get_ai_expert_comparison(request):
                 'Human experts better capture subtle emotional nuances and contextual factors.',
                 'AI shows consistent performance but may miss cultural or domain-specific references.'
             ],
-            'conclusion': f'The AI model achieves {accuracy * 100:.1f}% agreement with human expert judgments, demonstrating {"strong" if accuracy >= 0.75 else "moderate"} alignment. Key differences arise from contextual interpretation, mixed emotions, and ambiguous language.',
+            'conclusion': f'The AI pre-labeling achieves {accuracy * 100:.1f}% average agreement with human expert annotators on same-feedback matched rows, demonstrating {"strong" if accuracy >= 0.75 else "moderate"} alignment.',
             'classification_report': report
         }, status=status.HTTP_200_OK)
         
@@ -2403,6 +2535,112 @@ def get_ai_expert_comparison(request):
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_visualization_summary(request):
+    """
+    Visualization summary for thesis figures based on the validated annotation set.
+    Uses majority-vote expert labels from combined_annotations_all.csv.
+    """
+    from pathlib import Path
+    import re
+
+    user = request.user
+    if user.role not in ['faculty', 'admin']:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        base_path = Path(__file__).parent.parent / 'data' / 'annotations'
+        annotation_file = base_path / 'combined_annotations_all.csv'
+
+        if not annotation_file.exists():
+            return Response({
+                'error': 'Annotation file not found',
+                'message': 'Visualization data is not available'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        df = pd.read_csv(annotation_file)
+
+        if not all(col in df.columns for col in ['annotator_1', 'annotator_2', 'annotator_3']):
+            return Response({'error': 'Required annotator columns are missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        df['expert_label'] = df[['annotator_1', 'annotator_2', 'annotator_3']].mode(axis=1)[0].astype(str).str.strip().str.lower()
+
+        question_pattern = re.compile(r'^q([1-4])_f\d+$', re.IGNORECASE)
+
+        def extract_question_num(feedback_id):
+            match = question_pattern.match(str(feedback_id).strip())
+            return int(match.group(1)) if match else None
+
+        df['question_num'] = df['feedback_id'].apply(extract_question_num)
+        df = df[df['question_num'].notna()].copy()
+        df['question_num'] = df['question_num'].astype(int)
+
+        valid_emotions = ['joy', 'satisfaction', 'acceptance', 'boredom', 'disappointment']
+        excluded_irrelevant_count = int((~df['expert_label'].isin(valid_emotions)).sum())
+        df = df[df['expert_label'].isin(valid_emotions)].copy()
+
+        question_labels = {
+            1: 'Course Improvement',
+            2: 'Best Teaching',
+            3: 'Least Teaching',
+            4: 'Constructive Comment',
+        }
+        question_texts = {
+            1: 'What changes would you recommend to improve this course?',
+            2: "What did you like best about your instructor's teaching?",
+            3: 'What did you like least about your instructor\'s teaching?',
+            4: 'Any further, constructive comment?',
+        }
+
+        question_distribution = []
+        for question_num in [1, 2, 3, 4]:
+            question_df = df[df['question_num'] == question_num]
+            emotion_counts = question_df['expert_label'].value_counts().to_dict()
+            total = len(question_df)
+
+            row = {
+                'question_num': question_num,
+                'question_label': question_labels[question_num],
+                'question_text': question_texts[question_num],
+                'total': total,
+            }
+
+            for emotion in valid_emotions:
+                count = int(emotion_counts.get(emotion, 0))
+                row[emotion] = count
+                row[f'{emotion}_pct'] = round((count / total) * 100, 2) if total else 0
+
+            question_distribution.append(row)
+
+        overall_counts = df['expert_label'].value_counts().to_dict()
+        overall_distribution = [
+            {
+                'emotion': emotion,
+                'count': int(overall_counts.get(emotion, 0)),
+                'percentage': round((int(overall_counts.get(emotion, 0)) / len(df)) * 100, 2) if len(df) else 0,
+            }
+            for emotion in valid_emotions
+        ]
+
+        return Response({
+            'recommended_chart': 'stacked_bar',
+            'title': 'Emotion Distribution by Feedback Question',
+            'total_annotations': int(len(pd.read_csv(annotation_file))),
+            'total_valid_annotations': int(len(df)),
+            'excluded_irrelevant_count': excluded_irrelevant_count,
+            'question_distribution': question_distribution,
+            'overall_distribution': overall_distribution,
+            'chart_note': 'Stacked bar chart uses majority-vote expert labels from the validated annotation dataset.',
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in visualization summary: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def apply_rbac_filters(queryset, user, request):

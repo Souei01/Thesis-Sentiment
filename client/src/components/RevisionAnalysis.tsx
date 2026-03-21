@@ -15,7 +15,6 @@ import {
   FileText,
   Shield,
   Star,
-  Brain,
   Users,
   Target,
   Lightbulb,
@@ -40,16 +39,15 @@ interface RevisionAnalysisProps {
 }
 
 export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps) {
-  const [activeTab, setActiveTab] = useState<'alignment' | 'thematic' | 'consistency' | 'negative' | 'comparison'>('alignment');
+  const [activeTab, setActiveTab] = useState<'alignment' | 'thematic' | 'negative'>('alignment');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>({});
 
   const tabs = [
     { id: 'alignment', label: 'Alignment Analysis', icon: Target, desc: 'Likert vs Sentiment' },
-    { id: 'thematic', label: 'Thematic Analysis', icon: Lightbulb, desc: 'Negative Themes' },
-    { id: 'consistency', label: 'Data Encoding', icon: Shield, desc: 'Reliability' },
-    { id: 'negative', label: 'Negative Summary', icon: Star, desc: 'Low Ratings' },
-    { id: 'comparison', label: 'AI vs Expert', icon: Brain, desc: 'Model Validation' },
+    { id: 'thematic', label: 'Thematic Patterns', icon: Lightbulb, desc: 'Comment Themes' },
+    { id: 'negative', label: 'Negative Summary', icon: Star, desc: 'Low-Rating Severity' },
   ];
 
   useEffect(() => {
@@ -58,6 +56,7 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       let result;
       switch (activeTab) {
@@ -67,19 +66,19 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
         case 'thematic':
           result = await revisionService.getThematicAnalysis(filters);
           break;
-        case 'consistency':
-          result = await revisionService.getEncodingConsistency(filters);
-          break;
+
         case 'negative':
           result = await revisionService.getNegativeSummary(filters);
           break;
-        case 'comparison':
-          result = await revisionService.getAIExpertComparison(filters);
-          break;
       }
       setData(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading revision data:', error);
+      if (!error?.response) {
+        setError('Cannot connect to the backend API. Start the Django server at http://127.0.0.1:8000 and try again.');
+      } else {
+        setError(error?.response?.data?.error || 'Failed to load revision data.');
+      }
     } finally {
       setLoading(false);
     }
@@ -92,8 +91,8 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
         <div className="px-6 py-5 bg-gradient-to-r from-[#8E1B1B] to-rose-700">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Thesis Revision Analysis</h1>
-              <p className="text-rose-100 text-sm mt-1">Comprehensive analysis for research validation and improvement</p>
+              <h1 className="text-2xl font-bold text-white">Feedback Analysis</h1>
+              <p className="text-rose-100 text-sm mt-1">Course feedback patterns, sentiment alignment, and low-rating risk signals</p>
             </div>
             <Button
               onClick={loadData}
@@ -146,13 +145,22 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
         <div className="flex items-center justify-center py-20">
           <Spinner className="h-8 w-8 text-[#8E1B1B]" />
         </div>
+      ) : error ? (
+        <div className="bg-white rounded-2xl border border-red-200/70 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-red-100 bg-red-50/70">
+            <h3 className="font-semibold text-red-800">Analysis Data Unavailable</h3>
+            <p className="text-xs text-red-600 mt-1">Connection or API issue detected.</p>
+          </div>
+          <div className="p-5">
+            <p className="text-sm text-gray-700">{error}</p>
+            <p className="text-xs text-gray-500 mt-3">If this is local development, ensure both frontend and backend servers are running.</p>
+          </div>
+        </div>
       ) : (
         <>
           {activeTab === 'alignment' && <AlignmentAnalysisView data={data} />}
           {activeTab === 'thematic' && <ThematicAnalysisView data={data} />}
-          {activeTab === 'consistency' && <EncodingConsistencyView data={data} />}
           {activeTab === 'negative' && <NegativeSummaryView data={data} />}
-          {activeTab === 'comparison' && <AIExpertComparisonView data={data} />}
         </>
       )}
     </div>
@@ -327,6 +335,8 @@ function ThematicAnalysisView({ data }: { data: any }) {
     return <div className="text-center py-10 text-gray-500">No thematic data available</div>;
   }
 
+  const activeThemeCount = data.active_theme_count ?? Object.values(data.overall_themes || {}).filter((count: any) => count > 0).length;
+
   const themeColors = {
     teaching_methods: { color: '#ef4444', bg: 'bg-red-50', icon: Users },
     course_materials: { color: '#f59e0b', bg: 'bg-amber-50', icon: FileText },
@@ -343,12 +353,12 @@ function ThematicAnalysisView({ data }: { data: any }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200/60 p-5">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-50">
-              <TrendingDown className="h-5 w-5 text-red-600" />
+            <div className="p-2 rounded-lg bg-amber-50">
+              <FileText className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Negative Feedback</p>
-              <p className="text-2xl font-bold text-gray-900">{data.total_negative_feedback}</p>
+              <p className="text-sm text-gray-500">Comment Records Analyzed</p>
+              <p className="text-2xl font-bold text-gray-900">{data.total_feedback_analyzed}</p>
             </div>
           </div>
         </div>
@@ -358,8 +368,8 @@ function ThematicAnalysisView({ data }: { data: any }) {
               <BarChart3 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Courses Analyzed</p>
-              <p className="text-2xl font-bold text-gray-900">{data.courses_analyzed}</p>
+              <p className="text-sm text-gray-500">Themed Comments</p>
+              <p className="text-2xl font-bold text-gray-900">{data.themed_feedback_count}</p>
             </div>
           </div>
         </div>
@@ -369,11 +379,25 @@ function ThematicAnalysisView({ data }: { data: any }) {
               <Lightbulb className="h-5 w-5 text-violet-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Themes Identified</p>
+              <p className="text-sm text-gray-500">Active Themes</p>
               <p className="text-2xl font-bold text-gray-900">
-                {Object.keys(data.overall_themes || {}).length}
+                {activeThemeCount}
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-amber-50 to-white rounded-2xl border border-amber-100 p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-white shadow-sm">
+            <Lightbulb className="h-6 w-6 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900 mb-2">What This Tab Shows</h3>
+            <p className="text-sm text-gray-600">
+              This view scans comment text for recurring issue themes across all submitted feedback. It is separate from the Negative Summary tab, which only reports low-rating volume and severity.
+            </p>
           </div>
         </div>
       </div>
@@ -382,6 +406,7 @@ function ThematicAnalysisView({ data }: { data: any }) {
       <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Overall Theme Distribution</h3>
+          <p className="text-xs text-gray-500 mt-1">Counts of comment records that matched each theme keyword set.</p>
         </div>
         <div className="p-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -411,7 +436,7 @@ function ThematicAnalysisView({ data }: { data: any }) {
       <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Per-Course Analysis</h3>
-          <p className="text-xs text-gray-500 mt-1">Negative feedback breakdown by course</p>
+          <p className="text-xs text-gray-500 mt-1">Theme signals by course across submitted comment text</p>
         </div>
         <div className="p-5 space-y-4">
           {data.course_breakdown.slice(0, 10).map((course: any, idx: number) => (
@@ -426,10 +451,10 @@ function ThematicAnalysisView({ data }: { data: any }) {
                   <p className="text-xs text-gray-500 mt-1">Instructor: {course.instructor}</p>
                 </div>
                 <div className="text-right">
-                  <Badge variant="outline" className="mb-1">{course.count} feedback</Badge>
+                  <Badge variant="outline" className="mb-1">{course.count} comment records</Badge>
                   <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    <span className="text-sm font-bold text-gray-900">{course.avg_rating}</span>
+                    <Lightbulb className="h-3 w-3 text-amber-500" />
+                    <span className="text-sm font-bold text-gray-900">{course.theme_coverage_pct}% coverage</span>
                   </div>
                 </div>
               </div>
@@ -443,6 +468,7 @@ function ThematicAnalysisView({ data }: { data: any }) {
                   <span className="text-sm font-medium capitalize">{course.dominant_theme.replace('_', ' ')}</span>
                   <span className="text-xs text-gray-500">({course.dominant_theme_count} mentions)</span>
                 </div>
+                <p className="text-xs text-gray-500">{course.theme_match_count} of {course.count} comment records matched at least one theme.</p>
               </div>
 
               {/* Theme Breakdown */}
@@ -753,205 +779,3 @@ function NegativeSummaryView({ data }: { data: any }) {
   );
 }
 
-// ============================================================================
-// REVISION #5: AI vs Expert Comparison
-// ============================================================================
-function AIExpertComparisonView({ data }: { data: any }) {
-  if (!data || !data.overall_accuracy) {
-    return <div className="text-center py-10 text-gray-500">No comparison data available</div>;
-  }
-
-  const accuracyPct = (data.overall_accuracy * 100).toFixed(1);
-
-  return (
-    <div className="space-y-6">
-      {/* Summary */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 p-6">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-white shadow-sm">
-            <Brain className="h-6 w-6 text-purple-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-2">AI vs Human Expert Comparison</h3>
-            <p className="text-sm text-gray-600 mb-4">{data.conclusion}</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500">Overall Agreement</p>
-                <p className="text-3xl font-bold text-purple-600">{accuracyPct}%</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Total Comparisons</p>
-                <p className="text-3xl font-bold text-gray-900">{data.total_comparisons}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Emotion Performance */}
-      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Per-Emotion Performance</h3>
-          <p className="text-xs text-gray-500 mt-1">Precision, recall, and F1-score for each emotion category</p>
-        </div>
-        <div className="p-5 space-y-3">
-          {data.emotion_performance?.map((perf: any, idx: number) => (
-            <div key={idx} className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h4 className="font-semibold text-gray-900 capitalize">{perf.emotion}</h4>
-                  <p className="text-xs text-gray-500">{perf.support} samples</p>
-                </div>
-                <Badge className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-                  F1: {perf.f1_score}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div>
-                  <p className="text-gray-500 text-xs">Precision</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500" style={{ width: `${perf.precision * 100}%` }} />
-                    </div>
-                    <span className="font-medium text-gray-900">{perf.precision}</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Recall</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500" style={{ width: `${perf.recall * 100}%` }} />
-                    </div>
-                    <span className="font-medium text-gray-900">{perf.recall}</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">F1-Score</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-500" style={{ width: `${perf.f1_score * 100}%` }} />
-                    </div>
-                    <span className="font-medium text-gray-900">{perf.f1_score}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Similarities and Differences */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Similarities */}
-        <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <ThumbsUp className="h-4 w-4 text-green-600" />
-              <h3 className="font-semibold text-gray-900">Similarities</h3>
-            </div>
-          </div>
-          <div className="p-5">
-            <ul className="space-y-2">
-              {data.similarities?.map((sim: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                  <span className="text-sm text-gray-700">{sim}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Differences */}
-        <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <ThumbsDown className="h-4 w-4 text-amber-600" />
-              <h3 className="font-semibold text-gray-900">Differences</h3>
-            </div>
-          </div>
-          <div className="p-5">
-            <ul className="space-y-2">
-              {data.differences?.map((diff: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                  <span className="text-sm text-gray-700">{diff}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Divergence Reasons */}
-      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Reasons for Divergence</h3>
-          <p className="text-xs text-gray-500 mt-1">Factors contributing to disagreement between AI and human experts</p>
-        </div>
-        <div className="p-5 space-y-4">
-          {data.divergence_reasons?.map((reason: any, idx: number) => (
-            <div key={idx} className="p-5 rounded-xl bg-amber-50/50 border border-amber-100">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-white shadow-sm shrink-0">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 mb-1">{reason.reason}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{reason.description}</p>
-                  <div className="flex items-start gap-2">
-                    <Lightbulb className="h-3 w-3 text-gray-400 mt-0.5 shrink-0" />
-                    <p className="text-xs text-gray-500 italic">{reason.example}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Agreement Examples */}
-      {data.agreement_examples && data.agreement_examples.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <h3 className="font-semibold text-gray-900">Agreement Examples</h3>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            {data.agreement_examples.map((example: any, idx: number) => (
-              <div key={idx} className="p-4 rounded-lg bg-green-50/50 border border-green-100">
-                <p className="text-sm text-gray-700 mb-2">"{example.text}"</p>
-                <Badge className="bg-green-100 text-green-700 capitalize">{example.label}</Badge>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Disagreement Examples */}
-      {data.disagreement_examples && data.disagreement_examples.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-600" />
-              <h3 className="font-semibold text-gray-900">Disagreement Examples</h3>
-            </div>
-          </div>
-          <div className="p-5 space-y-3">
-            {data.disagreement_examples.map((example: any, idx: number) => (
-              <div key={idx} className="p-4 rounded-lg bg-red-50/50 border border-red-100">
-                <p className="text-sm text-gray-700 mb-2">"{example.text}"</p>
-                <div className="flex gap-2">
-                  <Badge className="bg-blue-100 text-blue-700 capitalize">Expert: {example.expert_label}</Badge>
-                  <Badge className="bg-purple-100 text-purple-700 capitalize">AI: {example.ai_label}</Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

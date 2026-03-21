@@ -19,6 +19,7 @@ from .views import (
     get_encoding_consistency,
     get_negative_course_summary,
     get_ai_expert_comparison,
+    get_visualization_summary,
 )
 
 urlpatterns = [
@@ -41,4 +42,5 @@ urlpatterns = [
     path('revision/encoding-consistency/', get_encoding_consistency, name='encoding_consistency'),
     path('revision/negative-summary/', get_negative_course_summary, name='negative_course_summary'),
     path('revision/ai-expert-comparison/', get_ai_expert_comparison, name='ai_expert_comparison'),
+    path('revision/visualization-summary/', get_visualization_summary, name='visualization_summary'),
 ]
