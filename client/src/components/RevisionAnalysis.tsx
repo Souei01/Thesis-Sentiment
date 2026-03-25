@@ -41,8 +41,10 @@ interface RevisionAnalysisProps {
 export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps) {
   const [activeTab, setActiveTab] = useState<'alignment' | 'thematic' | 'negative'>('alignment');
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>({});
+  const [ratingExtremes, setRatingExtremes] = useState<any>(null);
 
   const tabs = [
     { id: 'alignment', label: 'Alignment Analysis', icon: Target, desc: 'Likert vs Sentiment' },
@@ -71,7 +73,12 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
           result = await revisionService.getNegativeSummary(filters);
           break;
       }
-      setData(result);
+      const [tabData, extremesData] = await Promise.all([
+        Promise.resolve(result),
+        revisionService.getCourseRatingExtremes(filters),
+      ]);
+      setData(tabData);
+      setRatingExtremes(extremesData);
     } catch (error: any) {
       console.error('Error loading revision data:', error);
       if (!error?.response) {
@@ -81,6 +88,101 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportPdfReport = async () => {
+    setExportingPdf(true);
+    try {
+      const [{ default: jsPDF }, autoTableModule] = await Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable'),
+      ]);
+
+      const autoTable = autoTableModule.default;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+      const tabLabel = tabs.find((tab) => tab.id === activeTab)?.label || 'Analysis';
+      const generatedAt = new Date().toLocaleString();
+
+      doc.setFontSize(16);
+      doc.text('Feedback Analysis Report', 40, 36);
+      doc.setFontSize(11);
+      doc.text(`Section: ${tabLabel}`, 40, 56);
+      doc.text(`Generated: ${generatedAt}`, 40, 72);
+
+      const highest = ratingExtremes?.highest_rated_course;
+      const lowest = ratingExtremes?.lowest_rated_course;
+      const summaryRows = [
+        ['Courses Analyzed', String(ratingExtremes?.courses_analyzed ?? 0)],
+        [
+          'Highest Rated Course',
+          highest
+            ? `${highest.course_code} (${highest.avg_rating}/5, ${highest.response_count} responses)`
+            : 'N/A',
+        ],
+        [
+          'Lowest Rated Course',
+          lowest
+            ? `${lowest.course_code} (${lowest.avg_rating}/5, ${lowest.response_count} responses)`
+            : 'N/A',
+        ],
+      ];
+
+      autoTable(doc, {
+        startY: 88,
+        head: [['Metric', 'Value']],
+        body: summaryRows,
+        theme: 'grid',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [142, 27, 27] },
+        columnStyles: { 0: { cellWidth: 180 }, 1: { cellWidth: 520 } },
+      });
+
+      let detailRows: string[][] = [];
+      let detailHead = [['Field', 'Value 1', 'Value 2', 'Value 3']];
+
+      if (activeTab === 'alignment') {
+        const ratings: Array<[string, any]> = Object.entries(data?.alignment_by_rating || {});
+        detailHead = [['Rating Bucket', 'Responses', 'Aligned', 'Alignment %']];
+        detailRows = ratings.map(([bucket, value]: [string, any]) => {
+          const alignedPct = value?.count ? ((value.aligned / value.count) * 100).toFixed(1) : '0.0';
+          return [bucket.replace('_', ' '), String(value?.count ?? 0), String(value?.aligned ?? 0), `${alignedPct}%`];
+        });
+      } else if (activeTab === 'thematic') {
+        detailHead = [['Course', 'Comments', 'Dominant Theme', 'Theme Coverage %']];
+        detailRows = (data?.course_breakdown || []).slice(0, 12).map((course: any) => [
+          String(course.course_code || ''),
+          String(course.count || 0),
+          String(course.dominant_theme || 'n/a').replace('_', ' '),
+          `${course.theme_coverage_pct ?? 0}%`,
+        ]);
+      } else {
+        detailHead = [['Course', 'Avg Rating', 'Negative Count', 'Dominant Emotion']];
+        detailRows = (data?.course_details || []).slice(0, 12).map((course: any) => [
+          String(course.course_code || ''),
+          String(course.avg_rating ?? 0),
+          String(course.total_negative ?? 0),
+          String(course.dominant_emotion || 'n/a'),
+        ]);
+      }
+
+      autoTable(doc, {
+        startY: 200,
+        head: detailHead,
+        body: detailRows.length ? detailRows : [['No data available for current filters', '', '', '']],
+        theme: 'striped',
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [30, 64, 175] },
+      });
+
+      const filename = `feedback-analysis-${activeTab}-report.pdf`;
+      doc.save(filename);
+    } catch (err) {
+      console.error('Failed to export PDF report:', err);
+      setError('Failed to export PDF report. Please try again.');
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -94,15 +196,27 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
               <h1 className="text-2xl font-bold text-white">Feedback Analysis</h1>
               <p className="text-rose-100 text-sm mt-1">Course feedback patterns, sentiment alignment, and low-rating risk signals</p>
             </div>
-            <Button
-              onClick={loadData}
-              variant="outline"
-              size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={exportPdfReport}
+                variant="outline"
+                size="sm"
+                disabled={loading || exportingPdf}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-60"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {exportingPdf ? 'Exporting...' : 'Export PDF'}
+              </Button>
+              <Button
+                onClick={loadData}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -158,11 +272,127 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
         </div>
       ) : (
         <>
+          {ratingExtremes && (ratingExtremes.highest_rated_course || ratingExtremes.lowest_rated_course) && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-xl border border-emerald-200/70 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-50">
+                      <TrendingUp className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Highest Rated Course</p>
+                      <p className="text-lg font-bold text-emerald-700">
+                        {ratingExtremes.highest_rated_course
+                          ? `${ratingExtremes.highest_rated_course.course_code} (${ratingExtremes.highest_rated_course.avg_rating}/5)`
+                          : 'N/A'}
+                      </p>
+                      {ratingExtremes.highest_rated_course && (
+                        <p className="text-xs text-gray-500">
+                          {ratingExtremes.highest_rated_course.course_name} • {ratingExtremes.highest_rated_course.response_count} responses
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {ratingExtremes.highest_rated_course?.reason && (
+                    <p className="text-xs text-emerald-700 mt-3">Reason: {ratingExtremes.highest_rated_course.reason}</p>
+                  )}
+                  {ratingExtremes.highest_rated_course?.sample_feedback && (
+                    <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.highest_rated_course.sample_feedback}"</p>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl border border-red-200/70 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-red-50">
+                      <TrendingDown className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Lowest Rated Course</p>
+                      <p className="text-lg font-bold text-red-700">
+                        {ratingExtremes.lowest_rated_course
+                          ? `${ratingExtremes.lowest_rated_course.course_code} (${ratingExtremes.lowest_rated_course.avg_rating}/5)`
+                          : 'N/A'}
+                      </p>
+                      {ratingExtremes.lowest_rated_course && (
+                        <p className="text-xs text-gray-500">
+                          {ratingExtremes.lowest_rated_course.course_name} • {ratingExtremes.lowest_rated_course.response_count} responses
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {ratingExtremes.lowest_rated_course?.reason && (
+                    <p className="text-xs text-red-700 mt-3">Reason: {ratingExtremes.lowest_rated_course.reason}</p>
+                  )}
+                  {ratingExtremes.lowest_rated_course?.sample_feedback && (
+                    <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.lowest_rated_course.sample_feedback}"</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <TopCoursesTable
+                  title="Top 10 Highest Rated Courses"
+                  titleClassName="text-emerald-700"
+                  rows={ratingExtremes.top_10_highest_courses || []}
+                  accentClassName="bg-emerald-50 border-emerald-100"
+                />
+                <TopCoursesTable
+                  title="Top 10 Lowest Rated Courses"
+                  titleClassName="text-red-700"
+                  rows={ratingExtremes.top_10_lowest_courses || []}
+                  accentClassName="bg-red-50 border-red-100"
+                />
+              </div>
+            </div>
+          )}
+
           {activeTab === 'alignment' && <AlignmentAnalysisView data={data} />}
           {activeTab === 'thematic' && <ThematicAnalysisView data={data} />}
           {activeTab === 'negative' && <NegativeSummaryView data={data} />}
         </>
       )}
+    </div>
+  );
+}
+
+function TopCoursesTable({
+  title,
+  titleClassName,
+  rows,
+  accentClassName,
+}: {
+  title: string;
+  titleClassName: string;
+  rows: any[];
+  accentClassName: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200/70 overflow-hidden">
+      <div className={cn('px-4 py-3 border-b', accentClassName)}>
+        <h3 className={cn('text-sm font-semibold', titleClassName)}>{title}</h3>
+      </div>
+      <div className="p-4 space-y-3 max-h-[440px] overflow-auto">
+        {rows.length === 0 ? (
+          <p className="text-sm text-gray-500">No course data available.</p>
+        ) : (
+          rows.map((course: any, idx: number) => (
+            <div key={`${course.course_code}-${idx}`} className="rounded-lg border border-gray-100 p-3 bg-gray-50/60">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-gray-500">#{idx + 1}</p>
+                  <p className="text-sm font-semibold text-gray-900">{course.course_code}</p>
+                  <p className="text-xs text-gray-600">{course.course_name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gray-900">{course.avg_rating}/5</p>
+                  <p className="text-xs text-gray-500">{course.response_count} responses</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

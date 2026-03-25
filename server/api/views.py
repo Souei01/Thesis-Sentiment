@@ -2294,6 +2294,173 @@ def get_negative_course_summary(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def get_course_rating_extremes(request):
+    """
+    Return highest and lowest rated courses based on average overall_rating,
+    including top-10 lists with derived reason and sample feedback.
+    """
+    user = request.user
+
+    if user.role not in ['faculty', 'admin']:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+    feedback_qs = Feedback.objects.filter(status='submitted')
+    feedback_qs = apply_rbac_filters(feedback_qs, user, request)
+
+    feedback_rows = feedback_qs.values(
+        'overall_rating',
+        'suggested_changes',
+        'best_teaching_aspect',
+        'least_teaching_aspect',
+        'further_comments',
+        'course_assignment__course__code',
+        'course_assignment__course__name',
+        'course_assignment__instructor__first_name',
+        'course_assignment__instructor__last_name'
+    )
+
+    course_stats = {}
+
+    for row in feedback_rows:
+        course_code = row['course_assignment__course__code']
+        if not course_code:
+            continue
+
+        if course_code not in course_stats:
+            course_stats[course_code] = {
+                'course_code': course_code,
+                'course_name': row['course_assignment__course__name'],
+                'instructor': (
+                    f"{row['course_assignment__instructor__first_name']} "
+                    f"{row['course_assignment__instructor__last_name']}"
+                ).strip(),
+                'ratings_sum': 0,
+                'response_count': 0,
+                'theme_counts': {
+                    'teaching_clarity': 0,
+                    'course_materials': 0,
+                    'assessment': 0,
+                    'workload': 0,
+                    'engagement': 0,
+                    'communication': 0,
+                    'general_sentiment': 0,
+                },
+                'positive_samples': [],
+                'negative_samples': [],
+                'general_samples': [],
+            }
+
+        stats = course_stats[course_code]
+        rating = row.get('overall_rating')
+        if rating is None:
+            continue
+
+        stats['ratings_sum'] += rating
+        stats['response_count'] += 1
+
+        text_candidates = [
+            row.get('suggested_changes') or '',
+            row.get('best_teaching_aspect') or '',
+            row.get('least_teaching_aspect') or '',
+            row.get('further_comments') or '',
+        ]
+        normalized_candidates = [str(text).strip() for text in text_candidates if str(text).strip()]
+
+        if normalized_candidates:
+            stats['general_samples'].append(normalized_candidates[0][:220])
+
+        positive_text = str(row.get('best_teaching_aspect') or '').strip()
+        negative_text = str(row.get('least_teaching_aspect') or '').strip() or str(row.get('suggested_changes') or '').strip()
+
+        if positive_text:
+            stats['positive_samples'].append(positive_text[:220])
+        if negative_text:
+            stats['negative_samples'].append(negative_text[:220])
+
+        combined = ' '.join(normalized_candidates).lower()
+        if not combined:
+            continue
+
+        if any(word in combined for word in ['teach', 'explain', 'lecture', 'clarity', 'understand', 'discussion']):
+            stats['theme_counts']['teaching_clarity'] += 1
+        if any(word in combined for word in ['material', 'module', 'slides', 'powerpoint', 'resource', 'handout']):
+            stats['theme_counts']['course_materials'] += 1
+        if any(word in combined for word in ['exam', 'quiz', 'test', 'grade', 'grading', 'assessment', 'rubric']):
+            stats['theme_counts']['assessment'] += 1
+        if any(word in combined for word in ['workload', 'deadline', 'heavy', 'overwhelming', 'assignment', 'task']):
+            stats['theme_counts']['workload'] += 1
+        if any(word in combined for word in ['engage', 'interactive', 'boring', 'interest', 'fun', 'participate']):
+            stats['theme_counts']['engagement'] += 1
+        if any(word in combined for word in ['communicate', 'respond', 'availability', 'meeting', 'announce', 'attendance']):
+            stats['theme_counts']['communication'] += 1
+        if any(word in combined for word in ['good', 'great', 'excellent', 'bad', 'poor', 'worst', 'improve']):
+            stats['theme_counts']['general_sentiment'] += 1
+
+    if not course_stats:
+        return Response({
+            'highest_rated_course': None,
+            'lowest_rated_course': None,
+            'top_10_highest_courses': [],
+            'top_10_lowest_courses': [],
+            'courses_analyzed': 0,
+            'message': 'No rated courses found for the current filters.'
+        }, status=status.HTTP_200_OK)
+
+    reason_map = {
+        'teaching_clarity': 'Teaching clarity and explanation quality is the strongest recurring theme.',
+        'course_materials': 'Course materials and resources are the most discussed factor.',
+        'assessment': 'Assessment and grading concerns are the main reason cited by students.',
+        'workload': 'Workload and deadlines are the dominant concern in comments.',
+        'engagement': 'Class engagement and interactivity are the most frequent feedback points.',
+        'communication': 'Communication and instructor availability are the primary reasons mentioned.',
+        'general_sentiment': 'General sentiment terms are most frequent in feedback comments.',
+    }
+
+    def pick_reason(theme_counts):
+        dominant_theme = max(theme_counts, key=theme_counts.get)
+        if theme_counts[dominant_theme] == 0:
+            return 'No dominant textual reason identified from current feedback set.'
+        return reason_map.get(dominant_theme, 'Recurring feedback themes identified from submitted comments.')
+
+    def to_course_payload(course_row, for_lowest=False):
+        avg_rating = round(course_row['ratings_sum'] / course_row['response_count'], 2) if course_row['response_count'] > 0 else 0
+        sample_pool = course_row['negative_samples'] if for_lowest else course_row['positive_samples']
+        if not sample_pool:
+            sample_pool = course_row['general_samples']
+        sample_feedback = sample_pool[0] if sample_pool else 'No sample feedback available.'
+
+        return {
+            'course_code': course_row['course_code'],
+            'course_name': course_row['course_name'],
+            'instructor': course_row['instructor'],
+            'avg_rating': avg_rating,
+            'response_count': int(course_row['response_count']),
+            'reason': pick_reason(course_row['theme_counts']),
+            'sample_feedback': sample_feedback,
+        }
+
+    course_list = [stats for stats in course_stats.values() if stats['response_count'] > 0]
+
+    sorted_highest = sorted(course_list, key=lambda x: (x['ratings_sum'] / x['response_count'], x['response_count']), reverse=True)
+    sorted_lowest = sorted(course_list, key=lambda x: (x['ratings_sum'] / x['response_count'], -x['response_count']))
+
+    top_10_highest = [to_course_payload(course, for_lowest=False) for course in sorted_highest[:10]]
+    top_10_lowest = [to_course_payload(course, for_lowest=True) for course in sorted_lowest[:10]]
+
+    highest = top_10_highest[0] if top_10_highest else None
+    lowest = top_10_lowest[0] if top_10_lowest else None
+
+    return Response({
+        'highest_rated_course': highest,
+        'lowest_rated_course': lowest,
+        'top_10_highest_courses': top_10_highest,
+        'top_10_lowest_courses': top_10_lowest,
+        'courses_analyzed': len(course_list)
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_ai_expert_comparison(request):
     try:
         from pathlib import Path

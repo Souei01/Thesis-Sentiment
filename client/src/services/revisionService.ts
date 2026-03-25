@@ -63,6 +63,13 @@ export const revisionService = {
     return response.data;
   },
 
+  async getCourseRatingExtremes(filters: any = {}) {
+    const queryString = buildQueryString(filters);
+    const url = `/revision/course-rating-extremes/${queryString ? '?' + queryString : ''}`;
+    const response = await axiosInstance.get(url);
+    return response.data;
+  },
+
   /**
    * REVISION #5: AI vs Expert Comparison
    * Compare ML predictions with human expert labels

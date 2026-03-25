@@ -1,0 +1,9 @@
+question,student_feedback,human_label,ai_label,observation
+Best Teaching Aspect,the knowledge that he knew about the course was on point with the teaching,satisfaction,acceptance,"In Best Teaching Aspect, AI reduced the response to acceptance, while human coders labeled satisfaction; lexical cues indicate stronger sentiment than neutral."
+Best Teaching Aspect,"-the instructor knows his subject very well and teaches us the knowledge he has including the basic.
+-the instructor gives us time to finish our project rather than rushing us.
+-understands us as a student, doesn't give heavy project.",satisfaction,acceptance,"In Best Teaching Aspect, AI reduced the response to acceptance, while human coders labeled satisfaction; lexical cues indicate stronger sentiment than neutral."
+Least Teaching Aspect,nothing,acceptance,disappointment,"In Least Teaching Aspect, human coders treated the response as acceptance, while AI classified it as disappointment due to explicit sentiment-bearing words."
+Least Teaching Aspect,nothing,acceptance,disappointment,"In Least Teaching Aspect, human coders treated the response as acceptance, while AI classified it as disappointment due to explicit sentiment-bearing words."
+Least Teaching Aspect,Hmm... I have no idea as well.,acceptance,disappointment,"In Least Teaching Aspect, human coders assigned acceptance, whereas AI assigned disappointment; the difference likely comes from subtle tone interpretation."
+Further Comment,I hope in the upcoming sem he will be fair to us students or who will be his students because many students are failing.,disappointment,acceptance,"In Further Comment, AI reduced the response to acceptance, while human coders labeled disappointment; lexical cues indicate stronger sentiment than neutral."

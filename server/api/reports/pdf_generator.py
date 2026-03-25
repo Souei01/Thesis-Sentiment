@@ -443,6 +443,104 @@ def generate_feedback_report_pdf(feedback_qs, filters, user):
                 elements.append(Spacer(1, 0.06*inch))
         
         elements.append(Spacer(1, 0.1*inch))
+
+        # Top-rated and lowest-rated courses
+        elements.append(Paragraph("Top Rated and Lowest Rated Courses", heading_style))
+
+        course_ratings = list(
+            feedback_qs.values(
+                'course_assignment__course__code',
+                'course_assignment__course__name',
+                'course_assignment__instructor__first_name',
+                'course_assignment__instructor__last_name'
+            )
+            .annotate(
+                avg_rating=Avg('overall_rating'),
+                response_count=Count('id')
+            )
+            .filter(response_count__gt=0)
+        )
+
+        if course_ratings:
+            sorted_highest = sorted(
+                course_ratings,
+                key=lambda x: (x['avg_rating'] or 0, x['response_count']),
+                reverse=True
+            )[:10]
+            sorted_lowest = sorted(
+                course_ratings,
+                key=lambda x: (x['avg_rating'] or 0, -x['response_count'])
+            )[:10]
+
+            highest_data = [[
+                'Rank', 'Course', 'Instructor', 'Avg Rating', 'Responses'
+            ]]
+            for idx, item in enumerate(sorted_highest, start=1):
+                instructor_name = (
+                    f"{item.get('course_assignment__instructor__first_name', '')} "
+                    f"{item.get('course_assignment__instructor__last_name', '')}"
+                ).strip()
+                highest_data.append([
+                    str(idx),
+                    f"{item.get('course_assignment__course__code', '')} - {item.get('course_assignment__course__name', '')}",
+                    instructor_name or 'N/A',
+                    f"{(item.get('avg_rating') or 0):.2f}",
+                    str(item.get('response_count', 0))
+                ])
+
+            elements.append(Paragraph("Top 10 Highest Rated Courses", subheading_style))
+            highest_table = Table(highest_data, colWidths=[0.5*inch, 2.5*inch, 1.8*inch, 0.9*inch, 0.8*inch])
+            highest_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16A34A')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+                ('ALIGN', (3, 1), (4, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ]))
+            elements.append(highest_table)
+            elements.append(Spacer(1, 0.1*inch))
+
+            lowest_data = [[
+                'Rank', 'Course', 'Instructor', 'Avg Rating', 'Responses'
+            ]]
+            for idx, item in enumerate(sorted_lowest, start=1):
+                instructor_name = (
+                    f"{item.get('course_assignment__instructor__first_name', '')} "
+                    f"{item.get('course_assignment__instructor__last_name', '')}"
+                ).strip()
+                lowest_data.append([
+                    str(idx),
+                    f"{item.get('course_assignment__course__code', '')} - {item.get('course_assignment__course__name', '')}",
+                    instructor_name or 'N/A',
+                    f"{(item.get('avg_rating') or 0):.2f}",
+                    str(item.get('response_count', 0))
+                ])
+
+            elements.append(Paragraph("Top 10 Lowest Rated Courses", subheading_style))
+            lowest_table = Table(lowest_data, colWidths=[0.5*inch, 2.5*inch, 1.8*inch, 0.9*inch, 0.8*inch])
+            lowest_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#DC2626')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+                ('ALIGN', (3, 1), (4, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ]))
+            elements.append(lowest_table)
+            elements.append(Spacer(1, 0.12*inch))
         
         # Recommendations
         elements.append(Paragraph("Recommendations", heading_style))
