@@ -308,14 +308,14 @@ def main():
     df = pd.read_csv('data/annotations/training_data_balanced.csv')
     print(f"✅ Loaded {len(df)} samples")
     
-    # Use FEEDBACK ONLY format (proven best)
+    # use feedback
     df['text'] = df['feedback']
     
-    # Map labels
+    # map labels
     label_dict = {'joy': 0, 'satisfaction': 1, 'acceptance': 2, 'boredom': 3, 'disappointment': 4}
     df['label_id'] = df['label'].map(label_dict)
     
-    # Split data (same split as training)
+    # split, same as training
     _, test_df = train_test_split(df, test_size=0.30, random_state=42, stratify=df['label_id'])
     
     test_texts = test_df['text'].tolist()
@@ -325,7 +325,7 @@ def main():
     print(f"   Format: Feedback Only")
     print()
     
-    # Models to test
+    # which models to test
     models_config = [
         {'name': 'RoBERTa', 'path': 'ml_models/roberta_finetuned'},
         {'name': 'mBERT', 'path': 'ml_models/mbert_finetuned'},
@@ -333,7 +333,7 @@ def main():
         {'name': 'XLM-RoBERTa', 'path': 'ml_models/xlm_roberta_finetuned'}
     ]
     
-    # Evaluate each model
+    # eval each
     results = []
     
     for config in models_config:

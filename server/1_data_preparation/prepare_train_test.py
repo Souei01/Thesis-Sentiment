@@ -15,7 +15,7 @@ print("=" * 80)
 print("DATA PROCESSING AND TRAIN/TEST SPLIT")
 print("=" * 80)
 
-# Load data
+# load data
 input_file = 'data/annotations/combined_annotations_with_text.csv'
 print(f"\n📂 Loading: {input_file}")
 df = pd.read_csv(input_file)
@@ -28,8 +28,9 @@ print(f"\n{'='*80}")
 print("STEP 1: CALCULATING CONSENSUS LABELS")
 print(f"{'='*80}")
 
+# get consensus
 def get_consensus_label(row):
-    """Get majority vote from 3 annotators"""
+    """majority vote from 3 annotators"""
     votes = [row['annotator_1'], row['annotator_2'], row['annotator_3']]
     counter = Counter(votes)
     most_common = counter.most_common(1)[0]
@@ -49,23 +50,24 @@ print(f"\n{'='*80}")
 print("STEP 2: TEXT PREPROCESSING")
 print(f"{'='*80}")
 
+# preprocess text
 def preprocess_text(text):
     """
-    Preprocess text with normalization techniques
-    Does NOT remove any samples, only cleans the text
+    clean & normalize
+    keeps all samples
     """
     if pd.isna(text) or text == '':
         return text
     
     text = str(text)
     
-    # 1. Unicode normalization
+    # unicode norm
     text = unicodedata.normalize('NFKD', text)
     
-    # 2. Lowercase
+    # lowercase
     text = text.lower()
     
-    # 3. Fix contractions
+    # fix contractions
     contractions = {
         "won't": "will not", "can't": "cannot", "n't": " not",
         "'re": " are", "'s": " is", "'d": " would",
@@ -74,10 +76,10 @@ def preprocess_text(text):
     for contraction, expansion in contractions.items():
         text = text.replace(contraction, expansion)
     
-    # 4. Remove extra whitespace
+    # rm whitespace
     text = re.sub(r'\s+', ' ', text)
     
-    # 5. Strip
+    # strip
     text = text.strip()
     
     return text
@@ -101,6 +103,7 @@ print(f"\n{'='*80}")
 print("STEP 3: ENCODING LABELS")
 print(f"{'='*80}")
 
+# encode labels
 label_dict = {
     'joy': 0,
     'satisfaction': 1,
@@ -119,7 +122,7 @@ print(f"\n{'='*80}")
 print("STEP 4: TRAIN/TEST SPLIT (70% / 30%)")
 print(f"{'='*80}")
 
-# Split with stratification
+# split 70/30, keep ratios
 train_df, test_df = train_test_split(
     df,
     test_size=0.30,
@@ -147,13 +150,13 @@ print(f"\n{'='*80}")
 print("STEP 5: PREPARING FINAL FORMAT")
 print(f"{'='*80}")
 
-# Select columns for training/testing
+# select cols
 columns_to_keep = ['feedback', 'question', 'label', 'label_id']
 
 train_final = train_df[columns_to_keep].copy()
 test_final = test_df[columns_to_keep].copy()
 
-# Reset index
+# reset index
 train_final = train_final.reset_index(drop=True)
 test_final = test_final.reset_index(drop=True)
 
@@ -169,19 +172,19 @@ print(f"{'='*80}")
 
 output_dir = Path('data/annotations')
 
-# Save training data
+# save train
 train_output = output_dir / 'train_data.csv'
 train_final.to_csv(train_output, index=False)
 print(f"\n✅ Training data saved: {train_output}")
 print(f"   Samples: {len(train_final)}")
 
-# Save test data
+# save test
 test_output = output_dir / 'test_data.csv'
 test_final.to_csv(test_output, index=False)
 print(f"✅ Test data saved: {test_output}")
 print(f"   Samples: {len(test_final)}")
 
-# Save full processed data (with all original columns)
+# save full
 full_output = output_dir / 'processed_full.csv'
 df[['feedback_id', 'feedback', 'question', 'label', 'label_id', 
     'annotator_1', 'annotator_2', 'annotator_3']].to_csv(full_output, index=False)

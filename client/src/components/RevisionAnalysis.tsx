@@ -272,84 +272,9 @@ export default function RevisionAnalysis({ filters = {} }: RevisionAnalysisProps
         </div>
       ) : (
         <>
-          {ratingExtremes && (ratingExtremes.highest_rated_course || ratingExtremes.lowest_rated_course) && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl border border-emerald-200/70 p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-50">
-                      <TrendingUp className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Highest Rated Course</p>
-                      <p className="text-lg font-bold text-emerald-700">
-                        {ratingExtremes.highest_rated_course
-                          ? `${ratingExtremes.highest_rated_course.course_code} (${ratingExtremes.highest_rated_course.avg_rating}/5)`
-                          : 'N/A'}
-                      </p>
-                      {ratingExtremes.highest_rated_course && (
-                        <p className="text-xs text-gray-500">
-                          {ratingExtremes.highest_rated_course.course_name} • {ratingExtremes.highest_rated_course.response_count} responses
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {ratingExtremes.highest_rated_course?.reason && (
-                    <p className="text-xs text-emerald-700 mt-3">Reason: {ratingExtremes.highest_rated_course.reason}</p>
-                  )}
-                  {ratingExtremes.highest_rated_course?.sample_feedback && (
-                    <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.highest_rated_course.sample_feedback}"</p>
-                  )}
-                </div>
-
-                <div className="bg-white rounded-xl border border-red-200/70 p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-50">
-                      <TrendingDown className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Lowest Rated Course</p>
-                      <p className="text-lg font-bold text-red-700">
-                        {ratingExtremes.lowest_rated_course
-                          ? `${ratingExtremes.lowest_rated_course.course_code} (${ratingExtremes.lowest_rated_course.avg_rating}/5)`
-                          : 'N/A'}
-                      </p>
-                      {ratingExtremes.lowest_rated_course && (
-                        <p className="text-xs text-gray-500">
-                          {ratingExtremes.lowest_rated_course.course_name} • {ratingExtremes.lowest_rated_course.response_count} responses
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {ratingExtremes.lowest_rated_course?.reason && (
-                    <p className="text-xs text-red-700 mt-3">Reason: {ratingExtremes.lowest_rated_course.reason}</p>
-                  )}
-                  {ratingExtremes.lowest_rated_course?.sample_feedback && (
-                    <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.lowest_rated_course.sample_feedback}"</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <TopCoursesTable
-                  title="Top 10 Highest Rated Courses"
-                  titleClassName="text-emerald-700"
-                  rows={ratingExtremes.top_10_highest_courses || []}
-                  accentClassName="bg-emerald-50 border-emerald-100"
-                />
-                <TopCoursesTable
-                  title="Top 10 Lowest Rated Courses"
-                  titleClassName="text-red-700"
-                  rows={ratingExtremes.top_10_lowest_courses || []}
-                  accentClassName="bg-red-50 border-red-100"
-                />
-              </div>
-            </div>
-          )}
-
           {activeTab === 'alignment' && <AlignmentAnalysisView data={data} />}
           {activeTab === 'thematic' && <ThematicAnalysisView data={data} />}
-          {activeTab === 'negative' && <NegativeSummaryView data={data} />}
+          {activeTab === 'negative' && <NegativeSummaryView data={data} ratingExtremes={ratingExtremes} />}
         </>
       )}
     </div>
@@ -863,7 +788,7 @@ function EncodingConsistencyView({ data }: { data: any }) {
 // ============================================================================
 // REVISION #4: Negative Course Summary
 // ============================================================================
-function NegativeSummaryView({ data }: { data: any }) {
+function NegativeSummaryView({ data, ratingExtremes }: { data: any; ratingExtremes?: any }) {
   if (!data || !data.course_details) {
     return <div className="text-center py-10 text-gray-500">No negative course data available</div>;
   }
@@ -923,6 +848,82 @@ function NegativeSummaryView({ data }: { data: any }) {
           </ul>
         </div>
       </div>
+
+      {/* Course Ratings */}
+      {ratingExtremes && (ratingExtremes.highest_rated_course || ratingExtremes.lowest_rated_course) && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-emerald-200/70 p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-50">
+                  <TrendingUp className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Highest Rated Course</p>
+                  <p className="text-lg font-bold text-emerald-700">
+                    {ratingExtremes.highest_rated_course
+                      ? `${ratingExtremes.highest_rated_course.course_code} (${ratingExtremes.highest_rated_course.avg_rating}/5)`
+                      : 'N/A'}
+                  </p>
+                  {ratingExtremes.highest_rated_course && (
+                    <p className="text-xs text-gray-500">
+                      {ratingExtremes.highest_rated_course.course_name} • {ratingExtremes.highest_rated_course.response_count} responses
+                    </p>
+                  )}
+                </div>
+              </div>
+              {ratingExtremes.highest_rated_course?.reason && (
+                <p className="text-xs text-emerald-700 mt-3">Reason: {ratingExtremes.highest_rated_course.reason}</p>
+              )}
+              {ratingExtremes.highest_rated_course?.sample_feedback && (
+                <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.highest_rated_course.sample_feedback}"</p>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl border border-red-200/70 p-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-50">
+                  <TrendingDown className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Lowest Rated Course</p>
+                  <p className="text-lg font-bold text-red-700">
+                    {ratingExtremes.lowest_rated_course
+                      ? `${ratingExtremes.lowest_rated_course.course_code} (${ratingExtremes.lowest_rated_course.avg_rating}/5)`
+                      : 'N/A'}
+                  </p>
+                  {ratingExtremes.lowest_rated_course && (
+                    <p className="text-xs text-gray-500">
+                      {ratingExtremes.lowest_rated_course.course_name} • {ratingExtremes.lowest_rated_course.response_count} responses
+                    </p>
+                  )}
+                </div>
+              </div>
+              {ratingExtremes.lowest_rated_course?.reason && (
+                <p className="text-xs text-red-700 mt-3">Reason: {ratingExtremes.lowest_rated_course.reason}</p>
+              )}
+              {ratingExtremes.lowest_rated_course?.sample_feedback && (
+                <p className="text-xs text-gray-600 mt-1 italic">"{ratingExtremes.lowest_rated_course.sample_feedback}"</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <TopCoursesTable
+              title="Top 10 Highest Rated Courses"
+              titleClassName="text-emerald-700"
+              rows={ratingExtremes.top_10_highest_courses || []}
+              accentClassName="bg-emerald-50 border-emerald-100"
+            />
+            <TopCoursesTable
+              title="Top 10 Lowest Rated Courses"
+              titleClassName="text-red-700"
+              rows={ratingExtremes.top_10_lowest_courses || []}
+              accentClassName="bg-red-50 border-red-100"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Course Details */}
       <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">

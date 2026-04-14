@@ -24,10 +24,9 @@ class LoginSerializer(serializers.Serializer):
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
             raise serializers.ValidationError("Invalid email format")
         
-        # Temporarily commented out for debugging
-        # # Check if email ends with wmsu.edu.ph
-        # if not value.endswith('@wmsu.edu.ph'):
-        #     raise serializers.ValidationError("Please use your WMSU email address")
+        # Check if email ends with wmsu.edu.ph
+        if not value.endswith('@wmsu.edu.ph'):
+            raise serializers.ValidationError("Please use your WMSU email address")
         
         return value.lower()
     

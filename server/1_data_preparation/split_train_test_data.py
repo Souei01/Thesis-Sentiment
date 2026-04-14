@@ -13,14 +13,14 @@ print("=" * 80)
 print("TRAIN/TEST DATA SPLITTING WITH DATA CLEANING")
 print("=" * 80)
 
-# Load the balanced training data
+# load data
 input_file = 'data/annotations/training_data_balanced.csv'
 print(f"\n📂 Loading: {input_file}")
 df = pd.read_csv(input_file)
 print(f"✅ Loaded {len(df)} samples")
 print(f"   Columns: {list(df.columns)}")
 
-# Show label distribution
+# show distribution
 print(f"\n📊 Original Label Distribution:")
 label_counts = df['label'].value_counts()
 for label, count in label_counts.items():
@@ -34,14 +34,14 @@ print("-" * 80)
 
 original_count = len(df)
 
-# 1. Remove duplicates
+# rm dups
 print("1. Removing duplicate feedback entries...")
 before_dups = len(df)
 df = df.drop_duplicates(subset=['feedback'], keep='first')
 after_dups = len(df)
 print(f"   Removed {before_dups - after_dups} duplicates")
 
-# 2. Remove rows with missing or empty feedback
+# rm empty
 print("2. Removing empty/missing feedback...")
 before_empty = len(df)
 df = df.dropna(subset=['feedback'])
@@ -49,14 +49,14 @@ df = df[df['feedback'].str.strip() != '']
 after_empty = len(df)
 print(f"   Removed {before_empty - after_empty} empty entries")
 
-# 3. Remove very short feedback (less than 10 characters)
+# rm short
 print("3. Removing very short feedback (< 10 characters)...")
 before_short = len(df)
 df = df[df['feedback'].str.len() >= 10]
 after_short = len(df)
 print(f"   Removed {before_short - after_short} short entries")
 
-# 4. Remove feedback that is just "none", "n/a", "na", etc.
+# rm noise
 print("4. Removing non-informative responses...")
 before_noise = len(df)
 noise_patterns = ['none', 'n/a', 'na', 'nil', 'nothing', 'no comment', 'no response']
@@ -65,7 +65,7 @@ df = df[~df['feedback'].str.lower().str.strip().str.match(pattern)]
 after_noise = len(df)
 print(f"   Removed {before_noise - after_noise} non-informative entries")
 
-# 5. Clean text - remove extra whitespace
+# clean whitespace
 print("5. Cleaning text formatting...")
 df['feedback'] = df['feedback'].str.strip()
 df['feedback'] = df['feedback'].str.replace(r'\s+', ' ', regex=True)
@@ -73,7 +73,7 @@ if 'question' in df.columns:
     df['question'] = df['question'].str.strip()
     df['question'] = df['question'].str.replace(r'\s+', ' ', regex=True)
 
-# 6. Reset index
+# reset index
 df = df.reset_index(drop=True)
 
 print(f"\n✅ Cleaning complete!")
@@ -93,23 +93,23 @@ for label, count in label_counts.items():
 print(f"\n✂️  SPLITTING DATA...")
 print("-" * 80)
 
-# Create label IDs for stratification
+# map labels to ids
 label_dict = {'joy': 0, 'satisfaction': 1, 'acceptance': 2, 'boredom': 3, 'disappointment': 4}
 df['label_id'] = df['label'].map(label_dict)
 
-# Split with stratification to maintain class distribution
+# split 70/30, keep ratios
 train_df, test_df = train_test_split(
     df, 
-    test_size=0.30,           # 30% for testing
-    random_state=42,           # Fixed seed for reproducibility
-    stratify=df['label_id']    # Maintain label distribution
+    test_size=0.30,
+    random_state=42,
+    stratify=df['label_id']
 )
 
 print(f"✅ Split complete!")
 print(f"   Training set: {len(train_df)} samples (70%)")
 print(f"   Test set:     {len(test_df)} samples (30%)")
 
-# Show distribution in each set
+# check distributions
 print(f"\n📊 Training Set Distribution:")
 train_counts = train_df['label'].value_counts()
 for label, count in train_counts.items():
@@ -126,23 +126,23 @@ for label, count in test_counts.items():
 print(f"\n💾 SAVING FILES...")
 print("-" * 80)
 
-# Create output directory if needed
+# set output dir
 output_dir = Path('data/annotations')
 output_dir.mkdir(parents=True, exist_ok=True)
 
-# Save training set
+# save train
 train_output = output_dir / 'training_data_70.csv'
 train_df.to_csv(train_output, index=False)
 print(f"✅ Saved: {train_output}")
 print(f"   {len(train_df)} samples")
 
-# Save test set
+# save test
 test_output = output_dir / 'testing_data_30.csv'
 test_df.to_csv(test_output, index=False)
 print(f"✅ Saved: {test_output}")
 print(f"   {len(test_df)} samples")
 
-# Also save a backup of original cleaned data
+# save backup
 cleaned_output = output_dir / 'training_data_balanced_cleaned.csv'
 df.to_csv(cleaned_output, index=False)
 print(f"✅ Saved: {cleaned_output} (backup of cleaned data)")

@@ -12,9 +12,6 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trai
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 import time
 from pathlib import Path
-import matplotlib.pyplot as plt
-import seaborn as sns
-from comprehensive_visualizations import ComprehensiveVisualizer
 from comprehensive_visualizations import ComprehensiveVisualizer
 
 class EmotionDataset(Dataset):

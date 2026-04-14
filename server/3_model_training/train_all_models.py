@@ -459,17 +459,17 @@ def train_model(model_key):
     print(f'Device: {device} (GPU sm_120 not yet supported)')
     print(f'Estimated training time: ~30-40 minutes on CPU\n')
     
-    # Load data
+    # load data
     print('📂 Loading data...')
     df = pd.read_csv('data/annotations/train_data.csv')
     print(f'✅ Loaded {len(df)} samples')
     print(f'📊 Distribution: {dict(df["label"].value_counts())}\n')
     
-    # Use feedback only (best format based on previous experiments)
+    # use feedback
     df['text'] = df['feedback']
     df['label_id'] = df['label'].map(LABEL_DICT)
     
-    # Split into train/val (70/30)
+    # split 70/30, keep ratios
     train_texts, val_texts, train_labels, val_labels = train_test_split(
         df['text'].tolist(),
         df['label_id'].tolist(),
@@ -479,7 +479,7 @@ def train_model(model_key):
     )
     print(f'Training: {len(train_texts)} | Validation: {len(val_texts)}\n')
     
-    # Load model and tokenizer
+    # load model
     print(f'🔄 Loading {model_name}...')
     tokenizer = AutoTokenizer.from_pretrained(config['path'])
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -491,19 +491,19 @@ def train_model(model_key):
     model.to(device)
     print('✅ Model loaded\n')
     
-    # Create datasets
+    # create datasets
     train_dataset = EmotionDataset(train_texts, train_labels, tokenizer, 
                                    TRAIN_CONFIG['max_length'])
     val_dataset = EmotionDataset(val_texts, val_labels, tokenizer, 
                                  TRAIN_CONFIG['max_length'])
     
-    # Setup output directories
+    # setup dirs
     output_dir = config['output_dir']
     results_dir = config['results_dir']
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     Path(results_dir).mkdir(parents=True, exist_ok=True)
     
-    # Training arguments
+    # training args
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=TRAIN_CONFIG['num_train_epochs'],
